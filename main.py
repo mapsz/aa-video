@@ -62,7 +62,7 @@ def pick_comments_by_symbol_count(comments, symbol_count):
 
         if \
         comment_length < max_comment_length and \
-        comment_length < symbol_count and \
+        comment_length < symbol_count + 20 and \
         comment["text"] != "[removed]":
             picked_comments.append(comment)
             symbol_count -= comment_length
