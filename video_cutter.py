@@ -1,4 +1,9 @@
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+from moviepy.editor import VideoFileClip
+import time
+
+input_video = "storage/videos/full/video.mp4"  # Путь к вашему видео
+output_folder = "storage/videos/minute"    # Папка для сохранения отрезков
 
 def split_video(input_video, output_folder, chunk_length=60):
     import os
@@ -19,7 +24,22 @@ def split_video(input_video, output_folder, chunk_length=60):
         start_time += chunk_length
         chunk_number += 1
 
-# Пример использования:
-input_video = "storage/videos/full/video.mp4"  # Путь к вашему видео
-output_folder = "storage/videos/minute"    # Папка для сохранения отрезков
-split_video(input_video, output_folder)
+def video_vertical(input_video):
+    # Загрузите видео
+    video = VideoFileClip("storage/videos/full/video.mp4")
+
+    # Рассчитаем новые размеры
+    width, height = video.size
+    new_width = int(height * 9 / 16)
+
+    # Обрезаем по бокам
+    video_resized = video.crop(x1=(width - new_width) // 2, x2=(width + new_width) // 2)
+
+    # Сохраняем результат
+    filepath = (f"storage/videos/full/vertical/{time.time()}.mp4")
+    video_resized.write_videofile(filepath)
+
+    return filepath
+
+vertical_vide = video_vertical(input_video)
+split_video(vertical_vide, output_folder)
