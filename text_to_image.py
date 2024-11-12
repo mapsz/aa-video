@@ -111,7 +111,7 @@ for line in text_lines:
 bubble_content_y += padding
 
 # Вставляем изображение сердечка
-heart_image = Image.open("heart.png")  # путь к вашему изображению сердечка (например, heart.png)
+heart_image = Image.open("assets/images/heart.png")  # путь к вашему изображению сердечка (например, heart.png)
 
 # Преобразуем изображение в RGBA (если оно не в этом формате)
 heart_image = heart_image.convert("RGBA")
