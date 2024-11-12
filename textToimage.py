@@ -3,9 +3,9 @@ import textwrap
 from datetime import datetime
 
 # Параметры изображения
-width, height = 500, 450  # увеличим высоту для добавления дополнительных элементов
-background_color = (255, 255, 255)  # цвет фона (белый)
-bubble_color = (200, 200, 255)  # цвет "бабла" (голубой)
+bubble_width, bubble_height = 500, 450  # ширина и высота бабла
+background_color = (0, 0, 0, 0)  # прозрачный фон (RGBA)
+bubble_color = (200, 200, 255, 255)  # цвет "бабла" (голубой, полный альфа-канал)
 text_color = (0, 0, 0)  # цвет текста (черный)
 outline_color = (0, 0, 0)  # цвет обводки
 outline_width = 5  # ширина обводки
@@ -16,24 +16,24 @@ likes = "3904"  # количество лайков
 date = datetime.now().strftime("%d %B %Y")  # текущая дата в формате "день месяц год"
 text = "My ex told me if i ever got a cat, he’d do his best to run it over with his car because he hates cats. \n\nThat was after i told him i loved cats and wanted go volunteer in a shelter."  # текст для отображения
 
-# Создаем пустое изображение с указанным фоном
-image = Image.new("RGB", (width, height), background_color)
+# Создаем пустое изображение с прозрачным фоном, которое будет соответствовать размеру бабла
+image = Image.new("RGBA", (bubble_width, bubble_height), background_color)
 draw = ImageDraw.Draw(image)
 
 # Задаем шрифт и размер текста
 try:
     font = ImageFont.truetype("arial.ttf", 20)  # шрифт Arial, размер 20
-    bold_font = ImageFont.truetype("arial.ttf", 24, encoding="unic")  # жирный шрифт для автора
+    bold_font = ImageFont.truetype("arial.ttf", 22, encoding="unic")  # жирный шрифт для автора
 except IOError:
     font = ImageFont.load_default()  # стандартный шрифт, если Arial не найден
     bold_font = font  # если Arial не найден, используем обычный шрифт
 
 # Определяем ширину бабла
 padding = 20  # отступы внутри бабла
-max_text_width = width - 2 * padding
+max_text_width = bubble_width - 2 * padding
 
 # Разбиваем основной текст на строки, чтобы каждая строка помещалась по ширине бабла
-wrapped_text = textwrap.fill(text, width=30)
+wrapped_text = textwrap.fill(text, width=50)
 
 # Определяем размеры текста с переносом строк
 text_lines = wrapped_text.splitlines()
@@ -57,39 +57,39 @@ author_bbox = draw.textbbox((0, 0), author, font=bold_font)
 author_width, author_height = author_bbox[2] - author_bbox[0], author_bbox[3] - author_bbox[1]
 
 # Высота бабла с учетом текста, лайков, даты и автора
-bubble_height = text_height + likes_height + date_height + author_height + padding * 4  # добавляем пространство между элементами
+bubble_content_height = text_height + likes_height + date_height + author_height + padding * 4  # добавляем пространство между элементами
 
 # Координаты бабла
-bubble_x = (width - max_text_width) // 2
-bubble_y = (height - bubble_height) // 2 + 40  # немного смещаем вниз для оставшегося места сверху
+bubble_x = (bubble_width - max_text_width) // 2
+bubble_y = (bubble_height - bubble_content_height) // 2  # вертикальная позиция внутри бабла
 
 # Рисуем обводку для бабла с хвостиком (увеличиваем размер на ширину обводки)
 outline_bbox = (bubble_x - outline_width, bubble_y - outline_width,
-                bubble_x + max_text_width + outline_width, bubble_y + bubble_height + outline_width)
+                bubble_x + max_text_width + outline_width, bubble_y + bubble_content_height + outline_width)
 
 # Рисуем закруглённый прямоугольник для обводки
 draw.rounded_rectangle(outline_bbox, radius=25, fill=outline_color)
 
 # Рисуем хвостик обводки
 outline_tail = [
-    (bubble_x + max_text_width - 40, bubble_y + bubble_height + outline_width),  # левый край хвостика
-    (bubble_x + max_text_width - 60, bubble_y + bubble_height + 30 + outline_width),  # низ хвостика
-    (bubble_x + max_text_width - 20, bubble_y + bubble_height + outline_width)  # правый край хвостика
+    (bubble_x + max_text_width - 40, bubble_y + bubble_content_height + outline_width),  # левый край хвостика
+    (bubble_x + max_text_width - 60, bubble_y + bubble_content_height + 30 + outline_width),  # низ хвостика
+    (bubble_x + max_text_width - 20, bubble_y + bubble_content_height + outline_width)  # правый край хвостика
 ]
 draw.polygon(outline_tail, fill=outline_color)
 
 # Рисуем сам бабл (внутри обводки)
 draw.rounded_rectangle(
-    (bubble_x, bubble_y, bubble_x + max_text_width, bubble_y + bubble_height),
+    (bubble_x, bubble_y, bubble_x + max_text_width, bubble_y + bubble_content_height),
     radius=20,
     fill=bubble_color
 )
 
 # Рисуем хвостик бабла
 tail = [
-    (bubble_x + max_text_width - 40, bubble_y + bubble_height),  # левый край хвостика
-    (bubble_x + max_text_width - 60, bubble_y + bubble_height + 30),  # низ хвостика
-    (bubble_x + max_text_width - 20, bubble_y + bubble_height)  # правый край хвостика
+    (bubble_x + max_text_width - 40, bubble_y + bubble_content_height),  # левый край хвостика
+    (bubble_x + max_text_width - 60, bubble_y + bubble_content_height + 30),  # низ хвостика
+    (bubble_x + max_text_width - 20, bubble_y + bubble_content_height)  # правый край хвостика
 ]
 draw.polygon(tail, fill=bubble_color)
 
@@ -135,7 +135,7 @@ date_x = bubble_x + max_text_width - padding - date_width
 draw.text((likes_x, bubble_content_y), likes_text, fill=text_color, font=likes_font)
 draw.text((date_x, bubble_content_y), date, fill=text_color, font=date_font)
 
-# Сохраняем изображение
+# Сохраняем изображение с прозрачным фоном, соответствующее размеру бабла
 image.save("comic_bubble_with_heart_image.png")
 
 # Показываем изображение (необязательно)
