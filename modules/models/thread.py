@@ -5,6 +5,8 @@ from datetime import datetime
 class Thread(Base):
     __tablename__ = 'threads'
 
+    REDDIT = "reddit"
+
     id = Column(Integer, primary_key=True)
     source = Column(String)
     identifier = Column(String)
