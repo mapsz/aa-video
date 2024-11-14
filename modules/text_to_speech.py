@@ -1,20 +1,22 @@
-import pyttsx3
-import time
+from elevenlabs import Voice, VoiceSettings, save
+from elevenlabs.client import ElevenLabs
+from config import elevenlabs_config
 
-# Инициализация pyttsx3
-engine = pyttsx3.init()
+class Elevenlabs:
+    def __init__(self):
+        self.client = ElevenLabs(
+            api_key=elevenlabs_config["api_key"],
+        )
 
-# Установка параметров
-engine.setProperty('rate', 150)  # Скорость речи
-engine.setProperty('volume', 1)  # Громкость (0.0 до 1.0)
+    def generate(self, text):
+        audio = self.client.generate(
+            text=text,
+            voice=Voice(
+                voice_id='nPczCjzI2devNBz1zQrb',
+                settings=VoiceSettings(stability=0.71, similarity_boost=0.5, style=0.0, use_speaker_boost=True)
+            )
+        )
 
-# Текст для озвучки
-text = "My ex told me if i ever got a cat, he’d do his best to run it over with his car because he hates cats. \n\nThat was after i told him i loved cats and wanted go volunteer in a shelter."
+        save(audio, "111.mp3")
 
-# Озвучиваем текст
-engine.save_to_file(text, 'output_audio.mp3')
-
-# Запуск озвучки
-engine.runAndWait()
-
-print("Текст сохранен в файл output_audio.mp3")
+        print("Audio saved successfully!")
