@@ -1,5 +1,7 @@
 DEBUG_MODE = True
 
+DatabaseUri = 'sqlite:///aa_video.db'
+
 reddit_config = {
     "client_id": "DkSK4Os-yWHhw1lXHTJ42g",
     "client_secret": "T34xu2bH_OMNeQzgDFmHcGr3spH1ZQ",
