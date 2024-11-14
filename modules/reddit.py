@@ -83,7 +83,7 @@ class Reddit:
 
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(f"Symbol Count:\n{symbol_count}\n\n")
-            file.write(f"Title:\n{thread["title"]}\n\n")
+            file.write(f"Title:\n{thread['title']}\n\n")
             for i, comment in enumerate(comments, start=1):
                 file.write(f"Comment {i}:\n{comment}\n\n")
 
