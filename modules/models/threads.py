@@ -6,6 +6,7 @@ class Threads(Base):
     __tablename__ = 'threads'
 
     id = Column(Integer, primary_key=True)
+    source = Column(String)
     identifier = Column(String)
     author = Column(String)
     score = Column(Integer)
@@ -18,6 +19,7 @@ def __repr__(self):
         f"<Threads("
 
         f"id={self.id},"
+        f"source='{self.source}', "
         f"identifier='{self.identifier}', "
         f"author='{self.author}', "
         f"score={self.score}, "
