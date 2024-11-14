@@ -16,18 +16,28 @@ class Thread(Base):
     symbol_count = Column(Integer)
     date = Column(DateTime)
 
-def __repr__(self):
-    return (
-        f"<Thread("
+    def __repr__(self):
+        return (
+            f"<Thread("
 
-        f"id={self.id},"
-        f"source='{self.source}', "
-        f"identifier='{self.identifier}', "
-        f"author='{self.author}', "
-        f"score={self.score}, "
-        f"title='{self.title}', "
-        f"symbol_count={self.symbol_count}, "
-        f"date='{self.date}') "
+            f"id={self.id},"
+            f"source='{self.source}', "
+            f"identifier='{self.identifier}', "
+            f"author='{self.author}', "
+            f"score={self.score}, "
+            f"title='{self.title}', "
+            f"symbol_count={self.symbol_count}, "
+            f"date='{self.date}') "
 
-        f">"
-    )
+            f">"
+        )
+
+    def calculate_symbol_count(thread):
+        symbol_count = len(thread.title)
+
+        for comment in thread.comments:
+            symbol_count += len(comment.text)
+
+        thread.symbol_count = symbol_count
+
+        return thread
