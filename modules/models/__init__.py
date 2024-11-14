@@ -1,2 +1,2 @@
-from .threads import Threads
-from .comments import Comments
+from .thread import Thread
+from .comment import Comment

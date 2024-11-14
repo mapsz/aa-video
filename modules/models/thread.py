@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime
 from ._base import Base
 from datetime import datetime
 
-class Threads(Base):
+class Thread(Base):
     __tablename__ = 'threads'
 
     id = Column(Integer, primary_key=True)
@@ -16,7 +16,7 @@ class Threads(Base):
 
 def __repr__(self):
     return (
-        f"<Threads("
+        f"<Thread("
 
         f"id={self.id},"
         f"source='{self.source}', "

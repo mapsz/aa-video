@@ -4,7 +4,7 @@ from ._base import Base
 from .threads import Threads
 from datetime import datetime
 
-class Comments(Base):
+class Comment(Base):
     __tablename__ = 'comments'
 
     id = Column(Integer, primary_key=True)
@@ -20,7 +20,7 @@ class Comments(Base):
 
 def __repr__(self):
     return (
-        f"<Threads("
+        f"<Comment("
 
         f"id={self.id},"
         f"thread_id={self.thread_id},"
@@ -35,4 +35,4 @@ def __repr__(self):
     )
 
 # Relationships
-Threads.comments = relationship("Comments", order_by=Comments.id, back_populates="threads")
+Threads.comments = relationship("Comment", order_by=Comments.id, back_populates="thread")
