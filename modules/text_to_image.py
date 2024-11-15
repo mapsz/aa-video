@@ -2,141 +2,188 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 from datetime import datetime
 
-# Параметры изображения
-bubble_width, bubble_height = 500, 450  # ширина и высота бабла
-background_color = (0, 0, 0, 0)  # прозрачный фон (RGBA)
-bubble_color = (200, 200, 255, 255)  # цвет "бабла" (голубой, полный альфа-канал)
-text_color = (0, 0, 0)  # цвет текста (черный)
-outline_color = (0, 0, 0)  # цвет обводки
-outline_width = 5  # ширина обводки
+class TextToImage:
+    def __init__():
+        pass
 
-# Текст и дополнительные элементы
-author = "dontbeahater_dear"  # только имя автора
-likes = "3904"  # количество лайков
-date = datetime.now().strftime("%d %B %Y")  # текущая дата в формате "день месяц год"
-text = "My ex told me if i ever got a cat, he’d do his best to run it over with his car because he hates cats. \n\nThat was after i told him i loved cats and wanted go volunteer in a shelter."  # текст для отображения
+    def text_to_lines_by_width(text, font, max_width):
+        # Create an image and a drawing object to measure the text
+        image = Image.new("RGB", (max_width, 100), (255, 255, 255))
+        draw = ImageDraw.Draw(image)
 
-# Создаем пустое изображение с прозрачным фоном, которое будет соответствовать размеру бабла
-image = Image.new("RGBA", (bubble_width, bubble_height), background_color)
-draw = ImageDraw.Draw(image)
+        words = text.split()
+        lines = []
+        current_line = ""
+        for word in words:
+            # Check how the line will look with the added word
+            test_line = current_line + ((" " if current_line else "") + word)
 
-# Задаем шрифт и размер текста
-try:
-    font = ImageFont.truetype("arial.ttf", 20)  # шрифт Arial, размер 20
-    bold_font = ImageFont.truetype("arial.ttf", 22, encoding="unic")  # жирный шрифт для автора
-except IOError:
-    font = ImageFont.load_default()  # стандартный шрифт, если Arial не найден
-    bold_font = font  # если Arial не найден, используем обычный шрифт
+            # Calculate the bounding box for the text
+            bbox = draw.textbbox((0, 0), test_line, font=font)
+            width = bbox[2] - bbox[0]  # Get the width of the bounding box
 
-# Определяем ширину бабла
-padding = 20  # отступы внутри бабла
-max_text_width = bubble_width - 2 * padding
+            # If the length of the line with the added word exceeds the max width, start a new line
+            if width > max_width:
+                lines.append(current_line)
+                current_line = word
+            else:
+                current_line = test_line
 
-# Разбиваем основной текст на строки, чтобы каждая строка помещалась по ширине бабла
-wrapped_text = textwrap.fill(text, width=50)
+        # Add the last line if it's not empty
+        if current_line:
+            lines.append(current_line)
 
-# Определяем размеры текста с переносом строк
-text_lines = wrapped_text.splitlines()
-line_height = draw.textbbox((0, 0), "hg", font=font)[3]  # высота строки
-text_height = line_height * len(text_lines)
+        return lines
 
-# Определяем шрифт и размеры для лайков и даты
-likes_font = ImageFont.truetype("arial.ttf", 16) if font else ImageFont.load_default()
-date_font = ImageFont.truetype("arial.ttf", 16) if font else ImageFont.load_default()
+    def get_font_height(font):
+        # Create an image and a drawing object to measure the text
+        image = Image.new("RGB", (500, 100), (255, 255, 255))
+        draw = ImageDraw.Draw(image)
 
-# Рассчитываем размеры лайков и даты
-likes_text = f"{likes} "
-likes_bbox = draw.textbbox((0, 0), likes_text, font=likes_font)
-likes_width, likes_height = likes_bbox[2] - likes_bbox[0], likes_bbox[3] - likes_bbox[1]
+        return draw.textbbox((0, 0), "hg", font=font)[3]
 
-date_bbox = draw.textbbox((0, 0), date, font=date_font)
-date_width, date_height = date_bbox[2] - date_bbox[0], date_bbox[3] - date_bbox[1]
+    def get_text_width(text, font):
+        image = Image.new("RGB", (500, 100), (255, 255, 255))
+        draw = ImageDraw.Draw(image)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        return bbox[2] - bbox[0]
 
-# Рассчитываем размеры автора
-author_bbox = draw.textbbox((0, 0), author, font=bold_font)
-author_width, author_height = author_bbox[2] - author_bbox[0], author_bbox[3] - author_bbox[1]
+class ComicBubble:
+    def __init__(self,
+                 author,
+                 text,
+                 score,
+                 date,
+                 author_font_path = "arial.ttf",
+                 text_font_path = "arial.ttf",
+                 author_font_size=18,
+                 text_font_size=16,
+                 image_width=500,
+                 bubble_color=(200, 200, 255, 255),
+                 text_color=(0, 0, 0),
+                 outline_color=(0, 0, 0),
+                 outline_width=4,
+                 padding=14,
+                 tail_height = 60,
+    ):
+        self.author = author
+        self.text = text
+        self.score = score
+        self.date = date
+        self.image_width = image_width
+        self.bubble_color = bubble_color
+        self.text_color = text_color
+        self.outline_color = outline_color
+        self.outline_width = outline_width
+        self.author_font_path = author_font_path
+        self.text_font_path = text_font_path
+        self.author_font_size = author_font_size
+        self.text_font_size = text_font_size
+        self.padding = padding
+        self.tail_height = tail_height
+        self.text_width = int(image_width - (padding * 2))
+        self.author_font = ImageFont.truetype(author_font_path, size=author_font_size)
+        self.text_font = ImageFont.truetype(text_font_path, size=text_font_size)
 
-# Высота бабла с учетом текста, лайков, даты и автора
-bubble_content_height = text_height + likes_height + date_height + author_height + padding * 4  # добавляем пространство между элементами
+    def calculate_image_height(self, author_lines, text_lines):
+        author_line_height = TextToImage.get_font_height(self.author_font)
+        text_line_height = TextToImage.get_font_height(self.text_font)
 
-# Координаты бабла
-bubble_x = (bubble_width - max_text_width) // 2
-bubble_y = (bubble_height - bubble_content_height) // 2  # вертикальная позиция внутри бабла
+        author_height = len(author_lines) * author_line_height
+        text_height = len(text_lines) * text_line_height
 
-# Рисуем обводку для бабла с хвостиком (увеличиваем размер на ширину обводки)
-outline_bbox = (bubble_x - outline_width, bubble_y - outline_width,
-                bubble_x + max_text_width + outline_width, bubble_y + bubble_content_height + outline_width)
+        height = \
+            self.padding + \
+            author_height + \
+            self.padding + \
+            text_height + \
+            self.padding + \
+            text_line_height + \
+            self.padding + \
+            self.tail_height
 
-# Рисуем закруглённый прямоугольник для обводки
-draw.rounded_rectangle(outline_bbox, radius=25, fill=outline_color)
+        return height
 
-# Рисуем хвостик обводки
-outline_tail = [
-    (bubble_x + max_text_width - 40, bubble_y + bubble_content_height + outline_width),  # левый край хвостика
-    (bubble_x + max_text_width - 60, bubble_y + bubble_content_height + 30 + outline_width),  # низ хвостика
-    (bubble_x + max_text_width - 20, bubble_y + bubble_content_height + outline_width)  # правый край хвостика
-]
-draw.polygon(outline_tail, fill=outline_color)
 
-# Рисуем сам бабл (внутри обводки)
-draw.rounded_rectangle(
-    (bubble_x, bubble_y, bubble_x + max_text_width, bubble_y + bubble_content_height),
-    radius=20,
-    fill=bubble_color
-)
+    def generate(self):
+        # Split By Lines
+        author_lines = TextToImage.text_to_lines_by_width(self.author, self.author_font, self.text_width)
+        text_lines = TextToImage.text_to_lines_by_width(self.text, self.text_font, self.text_width)
 
-# Рисуем хвостик бабла
-tail = [
-    (bubble_x + max_text_width - 40, bubble_y + bubble_content_height),  # левый край хвостика
-    (bubble_x + max_text_width - 60, bubble_y + bubble_content_height + 30),  # низ хвостика
-    (bubble_x + max_text_width - 20, bubble_y + bubble_content_height)  # правый край хвостика
-]
-draw.polygon(tail, fill=bubble_color)
+        image_height = self.calculate_image_height(author_lines, text_lines)
 
-# Определяем место для размещения элементов (автора, лайков, даты)
-bubble_content_y = bubble_y + padding  # Начальная позиция для текста внутри бабла
+        # Draw image
+        image = Image.new("RGBA", (self.image_width, image_height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
 
-# Рисуем автора (слева, жирным шрифтом)
-author_x = bubble_x + padding  # автор слева
-draw.text((author_x, bubble_content_y), author, fill=text_color, font=bold_font)
-bubble_content_y += author_height + padding  # Отступ после автора
+        # Draw border
+        draw.rounded_rectangle((0, 0, self.image_width, image_height - self.tail_height), radius=25, fill=self.outline_color)
 
-# Рисуем основной текст
-for line in text_lines:
-    text_x = bubble_x + padding
-    draw.text((text_x, bubble_content_y), line, fill=text_color, font=font)
-    bubble_content_y += line_height  # переносим курсор на следующую строку
+        # Draw bubble
+        draw.rounded_rectangle(
+            (
+                self.outline_width,
+                self.outline_width,
+                self.image_width - self.outline_width,
+                image_height - self.outline_width - self.tail_height
+            ),
+            radius=20,
+            fill=self.bubble_color
+        )
 
-# Добавляем отступ перед лайками и датой
-bubble_content_y += padding
+        #Draw Tail
+        outline_tail = [
+            (self.image_width - (self.image_width * 0.19), image_height - self.tail_height),  # левый край хвостика
+            (self.image_width - (self.image_width * 0.25), image_height),  # низ хвостика
+            (self.image_width - (self.image_width * 0.1), image_height - self.tail_height)  # правый край хвостика
+        ]
+        draw.polygon(outline_tail, fill=self.outline_color)
 
-# Вставляем изображение сердечка
-heart_image = Image.open("assets/images/heart.png")  # путь к вашему изображению сердечка (например, heart.png)
+        outline_tail = [
+            (
+                self.image_width - (self.image_width * 0.19) + self.outline_width + (self.outline_width / 2),
+                image_height - self.tail_height - self.outline_width
+            ),
+            (
+                self.image_width - (self.image_width * 0.25) + self.outline_width + (self.outline_width / 2),
+                image_height - self.outline_width - (self.outline_width)
+            ),
+            (
+                self.image_width - (self.image_width * 0.1),
+                image_height - self.tail_height - self.outline_width
+            ),
+        ]
+        draw.polygon(outline_tail, fill=self.bubble_color)
 
-# Преобразуем изображение в RGBA (если оно не в этом формате)
-heart_image = heart_image.convert("RGBA")
+        #Draw author
+        author_line_height = TextToImage.get_font_height(self.author_font)
+        cursor_y = self.padding
+        for line in author_lines:
+            draw.text((self.padding, cursor_y), line, fill=self.text_color, font=self.author_font)
+            cursor_y += author_line_height
 
-# Масштабируем сердечко до нужного размера
-heart_size = 20  # размер сердечка
-heart_image = heart_image.resize((heart_size, heart_size))
+        #Draw text
+        text_line_height = TextToImage.get_font_height(self.text_font)
+        cursor_y += self.padding
+        for line in text_lines:
+            draw.text((self.padding, cursor_y), line, fill=self.text_color, font=self.text_font)
+            cursor_y += text_line_height
 
-# Определяем координаты для вставки сердечка
-heart_x = bubble_x + padding  # сдвигаем сердечко на отступ от левого края
-heart_y = bubble_content_y  # позиция сердечка сразу после текста
+        #Draw score
+        cursor_y += self.padding
+        draw.text((self.padding, cursor_y), str(self.score), fill=self.text_color, font=self.text_font)
+        cursor_y += text_line_height
 
-# Вставляем сердечко на изображение с альфа-каналом как маской
-image.paste(heart_image, (heart_x, heart_y), heart_image.split()[3])  # используем альфа-канал как маску
+        #Draw score hearth
+        cursor_y -= text_line_height
+        heart_image = Image.open("assets/images/heart.png").convert("RGBA").resize((text_line_height, text_line_height))
+        score_width = TextToImage.get_text_width(str(self.score), self.text_font)
+        image.paste(heart_image, (self.padding + score_width + 5, cursor_y), heart_image.split()[3])
 
-# Позиции для лайков и даты
-likes_x = heart_x + heart_size + 5
-date_x = bubble_x + max_text_width - padding - date_width
+        #Draw date
+        date_text = str(datetime.strptime(self.date, "%Y-%m-%d %H:%M:%S").strftime("%d %B %Y"))
+        date_width = TextToImage.get_text_width(date_text, self.text_font)
+        draw.text((self.image_width - date_width - self.padding, cursor_y), date_text, fill=self.text_color, font=self.text_font)
 
-# Рисуем лайки и дату на одной строке внутри бабла
-draw.text((likes_x, bubble_content_y), likes_text, fill=text_color, font=likes_font)
-draw.text((date_x, bubble_content_y), date, fill=text_color, font=date_font)
 
-# Сохраняем изображение с прозрачным фоном, соответствующее размеру бабла
-image.save("comic_bubble_with_heart_image.png")
-
-# Показываем изображение (необязательно)
-image.show()
+        image.save("comic_bubble_with_heart_image.png")
