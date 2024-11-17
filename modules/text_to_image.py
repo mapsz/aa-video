@@ -104,7 +104,6 @@ class ComicBubble:
 
         return height
 
-
     def generate(self):
         # Split By Lines
         author_lines = TextToImage.text_to_lines_by_width(self.author, self.author_font, self.text_width)
@@ -132,28 +131,29 @@ class ComicBubble:
         )
 
         #Draw Tail
-        outline_tail = [
-            (self.image_width - (self.image_width * 0.19), image_height - self.tail_height),  # левый край хвостика
-            (self.image_width - (self.image_width * 0.25), image_height),  # низ хвостика
-            (self.image_width - (self.image_width * 0.1), image_height - self.tail_height)  # правый край хвостика
-        ]
-        draw.polygon(outline_tail, fill=self.outline_color)
+        if self.tail_height > 0:
+            outline_tail = [
+                (self.image_width - (self.image_width * 0.19), image_height - self.tail_height),  # левый край хвостика
+                (self.image_width - (self.image_width * 0.25), image_height),  # низ хвостика
+                (self.image_width - (self.image_width * 0.1), image_height - self.tail_height)  # правый край хвостика
+            ]
+            draw.polygon(outline_tail, fill=self.outline_color)
 
-        outline_tail = [
-            (
-                self.image_width - (self.image_width * 0.19) + self.outline_width + (self.outline_width / 2),
-                image_height - self.tail_height - self.outline_width
-            ),
-            (
-                self.image_width - (self.image_width * 0.25) + self.outline_width + (self.outline_width / 2),
-                image_height - self.outline_width - (self.outline_width)
-            ),
-            (
-                self.image_width - (self.image_width * 0.1),
-                image_height - self.tail_height - self.outline_width
-            ),
-        ]
-        draw.polygon(outline_tail, fill=self.bubble_color)
+            outline_tail = [
+                (
+                    self.image_width - (self.image_width * 0.19) + self.outline_width + (self.outline_width / 2),
+                    image_height - self.tail_height - self.outline_width
+                ),
+                (
+                    self.image_width - (self.image_width * 0.25) + self.outline_width + (self.outline_width / 2),
+                    image_height - self.outline_width - (self.outline_width)
+                ),
+                (
+                    self.image_width - (self.image_width * 0.1),
+                    image_height - self.tail_height - self.outline_width
+                ),
+            ]
+            draw.polygon(outline_tail, fill=self.bubble_color)
 
         #Draw author
         author_line_height = TextToImage.get_font_height(self.author_font)
