@@ -1,4 +1,4 @@
 from .utils import *
-from .reddit import Reddit
-from .text_to_speech import Elevenlabs
+from .reddit import *
+from .text_to_speech import *
 from .text_to_image import *

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from ._base import Base
-from .thread import Thread
+from modules.models import Thread
 from datetime import datetime
 
 class Comment(Base):

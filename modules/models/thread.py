@@ -1,6 +1,7 @@
+from concurrent.futures import thread
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import joinedload
 from ._base import Base
-from datetime import datetime
 
 class Thread(Base):
     __tablename__ = 'threads'
@@ -31,6 +32,10 @@ class Thread(Base):
 
             f">"
         )
+
+    @classmethod
+    def get(cls, session, thread_id):
+        return session.query(cls).options(joinedload(cls.comments)).filter(cls.id == thread_id).one_or_none()
 
     def calculate_symbol_count(thread):
         symbol_count = len(thread.title)
