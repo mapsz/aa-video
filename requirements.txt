@@ -1,8 +1,20 @@
 # pip install -r requirements.txt
 
+# Download the FFmpeg executable from the FFmpeg website.
+# Extract the contents of the ZIP file to a folder, e.g., C:\ffmpeg\.
+# Add the bin directory inside that folder to your system's PATH environment variable:
+# Right-click on "This PC" or "Computer" and select "Properties."
+# Click on "Advanced system settings" and then "Environment Variables."
+# Under "System variables," find the Path variable and click "Edit."
+# Add the path to the bin directory (e.g., C:\ffmpeg\bin\) to the list of values.
+# Click OK and restart your system.
+
 SQLAlchemy==2.0.36
 praw==7.8.1
 pillow==11.0.0
 textwrap3==0.9.2
 elevenlabs==1.12.1
 moviepy==1.0.3
+mutagen==1.47.0
+pydub==0.25.1
+yt-dlp==2024.11.18
