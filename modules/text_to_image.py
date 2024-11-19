@@ -50,6 +50,7 @@ class TextToImage:
 
 class ComicBubble:
     def __init__(self,
+        filepath,
         author,
         text,
         score,
@@ -66,6 +67,7 @@ class ComicBubble:
         padding=14,
         tail_height = 60,
     ):
+        self.filepath = filepath
         self.author = author
         self.text = text
         self.score = score
@@ -185,5 +187,4 @@ class ComicBubble:
         date_width = TextToImage.get_text_width(date_text, self.text_font)
         draw.text((self.image_width - date_width - self.padding, cursor_y), date_text, fill=self.text_color, font=self.text_font)
 
-
-        image.save("comic_bubble_with_heart_image.png")
+        image.save(f"{self.filepath}.png")
