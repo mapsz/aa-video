@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
-import textwrap
+from modules import make_dir
 from datetime import datetime
+import os
 
 class TextToImage:
     def __init__():
@@ -50,11 +51,6 @@ class TextToImage:
 
 class ComicBubble:
     def __init__(self,
-        filepath,
-        author,
-        text,
-        score,
-        date,
         author_font_path = "arial.ttf",
         text_font_path = "arial.ttf",
         author_font_size=18,
@@ -67,11 +63,6 @@ class ComicBubble:
         padding=14,
         tail_height = 60,
     ):
-        self.filepath = filepath
-        self.author = author
-        self.text = text
-        self.score = score
-        self.date = date
         self.image_width = image_width
         self.bubble_color = bubble_color
         self.text_color = text_color
@@ -106,10 +97,10 @@ class ComicBubble:
 
         return height
 
-    def generate(self):
+    def generate(self, filepath, author, text, score, date):
         # Split By Lines
-        author_lines = TextToImage.text_to_lines_by_width(self.author, self.author_font, self.text_width)
-        text_lines = TextToImage.text_to_lines_by_width(self.text, self.text_font, self.text_width)
+        author_lines = TextToImage.text_to_lines_by_width(author, self.author_font, self.text_width)
+        text_lines = TextToImage.text_to_lines_by_width(text, self.text_font, self.text_width)
 
         image_height = self.calculate_image_height(author_lines, text_lines)
 
@@ -173,18 +164,33 @@ class ComicBubble:
 
         #Draw score
         cursor_y += self.padding
-        draw.text((self.padding, cursor_y), str(self.score), fill=self.text_color, font=self.text_font)
+        draw.text((self.padding, cursor_y), str(score), fill=self.text_color, font=self.text_font)
         cursor_y += text_line_height
 
         #Draw score hearth
         cursor_y -= text_line_height
         heart_image = Image.open("assets/images/heart.png").convert("RGBA").resize((text_line_height, text_line_height))
-        score_width = TextToImage.get_text_width(str(self.score), self.text_font)
+        score_width = TextToImage.get_text_width(str(score), self.text_font)
         image.paste(heart_image, (self.padding + score_width + 5, cursor_y), heart_image.split()[3])
 
         #Draw date
-        date_text = str(datetime.strptime(self.date, "%Y-%m-%d %H:%M:%S").strftime("%d %B %Y"))
+        date_text = str(date.strftime("%d %B %Y"))
+        # date_text = str(datetime.strptime(date, "%Y-%m-%d %H:%M:%S").strftime("%d %B %Y"))
+
         date_width = TextToImage.get_text_width(date_text, self.text_font)
         draw.text((self.image_width - date_width - self.padding, cursor_y), date_text, fill=self.text_color, font=self.text_font)
 
-        image.save(f"{self.filepath}.png")
+        image.save(f"{filepath}.png")
+
+    def thread_to_images(self, thread):
+
+        filepath = f"storage/images/threads/{thread.identifier}"
+        if not os.path.exists(filepath):
+            make_dir(filepath)
+            self.generate(filepath, thread.author, thread.title, thread.score, thread.date)
+
+        for comment in thread.comments:
+            filepath = f"storage/images/comments/{comment.identifier}"
+            if not os.path.exists(filepath):
+                make_dir(filepath)
+                self.generate(filepath, comment.author, comment.text, comment.score, comment.date)
