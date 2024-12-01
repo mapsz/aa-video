@@ -94,7 +94,7 @@ class Elevenlabs:
             api_key=elevenlabs_config["api_key"],
         )
 
-    def generate(self, text, filepath, voice_id = 'nPczCjzI2devNBz1zQrb'):
+    def generate(self, text, filepath, voice_id = 'pNInz6obpgDQGcFmaJgB'):
         audio = self.client.generate(
             text=text,
             voice=Voice(

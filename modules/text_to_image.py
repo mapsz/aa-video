@@ -187,7 +187,10 @@ class ComicBubble:
         filepath = f"storage/images/threads/{thread.identifier}"
         if not os.path.exists(filepath):
             make_dir(filepath)
+            tail_height = self.tail_height
+            self.tail_height = 0
             self.generate(filepath, thread.author, thread.title, thread.score, thread.date)
+            self.tail_height = tail_height
 
         for comment in thread.comments:
             filepath = f"storage/images/comments/{comment.identifier}"
