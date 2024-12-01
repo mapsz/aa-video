@@ -17,12 +17,15 @@ class Video:
         best_video = False
         best_audio = False
         for format in formats:
-            if "width" in format and format["video_ext"] == "mp4":
+            if "height" in format and format["video_ext"] == "mp4":
                 if (best_video == False): best_video = format
-                if (format["width"] > best_video["width"]):
+                if(format["height"] == 1080):
                     best_video = format
 
-            if not "width" in format and format["audio_ext"] == "mp4":
+                if (format["height"] > best_video["height"] and best_video["height"] != 1080):
+                    best_video = format
+
+            if not "height" in format and format["audio_ext"] == "mp4":
                 if (best_audio == False): best_audio = format
                 if (best_audio["quality"] > best_audio["quality"]):
                     best_audio = format
@@ -34,10 +37,10 @@ class Video:
             'protocol': f'{best_video["protocol"]}+{best_audio["protocol"]}'
         }
 
-    def yt_download(url, filepath):
+    def yt_download(url, video_filepath):
         ydl_opts = {
             'format': Video.yt_dlp_select_format,
-            'outtmpl': filepath,
+            'outtmpl': video_filepath,
             # 'postprocessors': [{'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}]
         }
 
@@ -60,17 +63,30 @@ class Video:
             start_time += chunk_length
             chunk_number += 1
 
-    def to_vertical(video_path):
-        with VideoFileClip(video_path) as video:
+    def to_vertical(video_filepath):
+        with VideoFileClip(video_filepath) as video:
             width, height = video.size
 
             new_width = int(height * 9 / 16)
-            video_resized = video.crop(x1=(width - new_width) // 2, x2=(width + new_width) // 2)
+            if new_width % 2 != 0: new_width -= 1
 
-            filepath = f"storage/{time.time()}.mp4"
+            video_resized = video.crop(
+                x1=(width - new_width) // 2,
+                x2=(width + new_width) // 2
+            )
+
+            video_filename = os.path.splitext(os.path.basename(video_filepath))[0]
+
+            filepath = f"storage/video/sourceVertical/{video_filename}.mp4"
+            make_dir(filepath)
 
             video_resized.write_videofile(
                 filepath,
+                codec="libx264",
+                audio_codec="aac",
+                ffmpeg_params=[
+                    "-pix_fmt", "yuv420p"
+                ]
             )
 
     def overlay_audio(video_filepath, audio_filepath):
@@ -84,37 +100,36 @@ class Video:
         video_with_audio = video.set_audio(audio)
 
         # Сохранение результата
-        video_with_audio.write_videofile("output_video.mp4")
+
+        filepath = f"storage/video/60/with_audio/{os.path.splitext(os.path.basename(video_filepath))[0]}_{os.path.splitext(os.path.basename(audio_filepath))[0]}.mp4"
+        make_dir(filepath)
+        video_with_audio.write_videofile(filepath)
 
     def overlay_thread_images(video_filepath, thread, thread_timing):
-        # Загрузка видео
         video = VideoFileClip(video_filepath)
-
-        # Путь к файлу изображения
-        thread_filepath = f"storage/images/threads/{thread.identifier}.png"
-
-        # Переменные
         pause = True
         thread_title = True
         current_duration = 0
         images = []
-
-        # Работа с временными файлами
+        i = 0
         for thread_time in thread_timing:
-            current_duration += thread_time
             if pause:
                 pause = False
+                current_duration += thread_time
                 continue
 
             if thread_title:
                 thread_title = False
-                image_filepath = thread_filepath
+                image_filepath = f"storage/images/threads/{thread.identifier}.png"
             else:
-                continue
+                image_filepath = f"storage/images/comments/{thread.comments[i].identifier}.png"
+                i += 1
 
-            # Ресайз изображения только один раз
+            print(f"{current_duration} - {thread_time}")
+
+            # Resize image
             image = Image.open(image_filepath)
-            new_width = video.size[0]
+            new_width = int(video.size[0] * 0.95)
             original_width, original_height = image.size
             aspect_ratio = original_height / original_width
             new_height = int(new_width * aspect_ratio)
@@ -124,24 +139,19 @@ class Video:
             make_dir(temp_image)
             resized_image.save(temp_image)
 
-            # Добавление изображения в список
+            # Add image
             image_clip = ImageClip(temp_image)
             image_clip = image_clip.set_start(current_duration / 1000)  # Время в секундах
             image_clip = image_clip.set_duration(thread_time / 1000)
-            image_clip = image_clip.set_position(("center", "top"))
+            image_clip = image_clip.set_position(("center", "center"))
             images.append(image_clip)
 
-        # Создание финального видео
+            current_duration += thread_time
+            pause = True
+
         final = CompositeVideoClip([video] + images)
+        filepath = f"storage/video/60/final/{os.path.splitext(os.path.basename(video_filepath))[0]}.mp4"
+        make_dir(filepath)
+        final.write_videofile(filepath)
 
-        # Сохранение результата
-        output_filepath = video_filepath.replace(".mp4", "_with_overlay.mp4")
-        final.write_videofile(
-            output_filepath,
-            # codec="h264_nvenc",  # Используем NVENC
-            # ffmpeg_params=[
-            #     "-preset", "lossless",
-            # ]
-        )
-
-        return output_filepath
+        return filepath
