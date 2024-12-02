@@ -10,7 +10,7 @@ import yt_dlp
 from PIL import Image
 change_settings({"FFMPEG_BINARY": "libs/ffmpeg.exe"})
 
-class Video:
+class VideoManager:
     def yt_dlp_select_format(ctx):
         formats = ctx.get('formats')[::-1]
 
