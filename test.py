@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from modules.models._base import Base
 from modules.models import Thread
+from modules.models import Comment
 from modules.models import Video
 from modules import Reddit
 from datetime import datetime
@@ -19,7 +20,6 @@ from pydub import AudioSegment
 from pydub.utils import which
 from modules import make_dir
 from moviepy.config import change_settings
-
 
 session = get_session()
 
@@ -85,7 +85,20 @@ while 1:
 
     VideoManager.files_to_db(session)
 
-    # update threads
+    # Update Threads
+    if (datetime.now() - Comment.get_last_comment_date(session)).total_seconds() / 3600 > 24:
+        reddit = Reddit()
+        threads = reddit.fetch_top_threads("AskReddit")
+
+        saved_threads = []
+        for thread in threads:
+            saved_threads.append(Thread.add_if_not_exists(session, thread))
+        threads = saved_threads
+
+        for thread in threads:
+            comments = reddit.fetch_popular_comments(thread)
+            for comment in comments:
+                Comment.add_if_not_exists(session, comment, thread.id)
 
     # threads to images
 
