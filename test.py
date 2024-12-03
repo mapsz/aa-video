@@ -86,7 +86,8 @@ while 1:
     VideoManager.files_to_db(session)
 
     # Update Threads
-    if (datetime.now() - Comment.get_last_comment_date(session)).total_seconds() / 3600 > 24:
+    last_comment_date = Comment.get_last_comment_date(session)
+    if last_comment_date == None or (datetime.now() - last_comment_date).total_seconds() / 3600 > 24:
         reddit = Reddit()
         threads = reddit.fetch_top_threads("AskReddit")
 
