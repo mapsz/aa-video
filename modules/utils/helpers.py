@@ -1,9 +1,11 @@
 from config import DatabaseUri
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from modules.models._base import Base
 import os
 
 engine = create_engine(DatabaseUri)
+Base.metadata.create_all(engine)
 
 Session = sessionmaker(bind=engine)
 

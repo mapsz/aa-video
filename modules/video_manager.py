@@ -2,15 +2,70 @@ from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from moviepy.editor import VideoFileClip, AudioFileClip, ImageClip, CompositeVideoClip
 from moviepy.config import change_settings
 from modules import make_dir
+from modules.models import Video
 from PIL import Image
-import time
-import os
-import yt_dlp
+from urllib.parse import urlparse, parse_qs
+import os, glob, yt_dlp
 
 from PIL import Image
 change_settings({"FFMPEG_BINARY": "libs/ffmpeg.exe"})
 
 class VideoManager:
+    def files_to_db(session):
+        types = [Video.TYPE_SOURCE, Video.TYPE_SOURCE_VERTICAL]
+        for _type in types:
+            folder_path = f"storage/video/{_type}/{Video.SOURCE_YOUTUBE}/*.mp4"
+            files = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(folder_path)]
+            for file in files:
+                existing_video = session.query(Video).filter_by(
+                    source=Video.SOURCE_YOUTUBE,
+                    identifier=file,
+                    type=_type
+                ).first()
+
+                if existing_video: continue
+
+                video = Video(
+                    source=Video.SOURCE_YOUTUBE,
+                    identifier=file,
+                    type=_type,
+                    filepath=f"storage/video/{_type}/{Video.SOURCE_YOUTUBE}/{file}.mp4"
+                )
+                session.add(video)
+
+        session.commit()
+
+    def identifier_from_yt_url(url):
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        identifier = query_params.get('v', [None])[0]
+        if identifier:
+            return identifier
+        else:
+            raise ValueError("The 'v' parameter is missing in the URL")
+
+    def identifier_to_yt_url(identifier):
+        return f"https://www.youtube.com/watch?v={identifier}"
+
+    def add_yt_video(identifier, session):
+        existing_video = session.query(Video).filter_by(
+            source=Video.SOURCE_YOUTUBE,
+            identifier=identifier,
+            type=Video.TYPE_SOURCE
+        ).first()
+
+        if not existing_video:
+            video = Video(
+                source=Video.SOURCE_YOUTUBE,
+                identifier=identifier,
+                type=Video.TYPE_SOURCE,
+            )
+            session.add(video)
+            session.commit()
+            return video
+        else:
+            return existing_video
+
     def yt_dlp_select_format(ctx):
         formats = ctx.get('formats')[::-1]
 
@@ -37,11 +92,22 @@ class VideoManager:
             'protocol': f'{best_video["protocol"]}+{best_audio["protocol"]}'
         }
 
-    def yt_download(url, video_filepath):
+    def yt_download(url):
+        filename = VideoManager.identifier_from_yt_url(url)
+        filepath = f"storage/video/source/{Video.SOURCE_YOUTUBE}/{filename}.mp4"
+        make_dir(filepath)
         ydl_opts = {
-            'format': Video.yt_dlp_select_format,
-            'outtmpl': video_filepath,
-            # 'postprocessors': [{'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}]
+            'format': VideoManager.yt_dlp_select_format,
+            'outtmpl': filepath,
+            'postprocessors': [
+                {'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'},
+                {'key': 'FFmpegMetadata'}
+            ],
+            'postprocessor_args': [
+                '-c:v', 'libx264',
+                '-c:a', 'aac',
+            ],
+            'prefer_ffmpeg': True,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -63,8 +129,8 @@ class VideoManager:
             start_time += chunk_length
             chunk_number += 1
 
-    def to_vertical(video_filepath):
-        with VideoFileClip(video_filepath) as video:
+    def to_vertical(videoModule):
+        with VideoFileClip(videoModule.filepath) as video:
             width, height = video.size
 
             new_width = int(height * 9 / 16)
@@ -75,18 +141,18 @@ class VideoManager:
                 x2=(width + new_width) // 2
             )
 
-            video_filename = os.path.splitext(os.path.basename(video_filepath))[0]
+            video_filename = os.path.splitext(os.path.basename(videoModule.filepath))[0]
 
-            filepath = f"storage/video/sourceVertical/{video_filename}.mp4"
+            filepath = f"storage/video/{Video.TYPE_SOURCE_VERTICAL}/{Video.SOURCE_YOUTUBE}/{video_filename}.mp4"
             make_dir(filepath)
 
             video_resized.write_videofile(
                 filepath,
-                codec="libx264",
-                audio_codec="aac",
-                ffmpeg_params=[
-                    "-pix_fmt", "yuv420p"
-                ]
+                # codec="libx264",
+                # audio_codec="aac",
+                # ffmpeg_params=[
+                #     "-pix_fmt", "yuv420p"
+                # ]
             )
 
     def overlay_audio(video_filepath, audio_filepath):

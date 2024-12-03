@@ -1,7 +1,7 @@
-from concurrent.futures import thread
 from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import relationship, joinedload
 from ._base import Base
+from .association import thread_video_association
 
 class Thread(Base):
     __tablename__ = 'threads'
@@ -17,10 +17,16 @@ class Thread(Base):
     symbol_count = Column(Integer)
     date = Column(DateTime)
 
+    # Many-to-many relationship with Video
+    videos = relationship(
+        "Video",
+        secondary=thread_video_association,
+        back_populates="threads"
+    )
+
     def __repr__(self):
         return (
             f"<Thread("
-
             f"id={self.id},"
             f"source='{self.source}', "
             f"identifier='{self.identifier}', "
@@ -29,7 +35,6 @@ class Thread(Base):
             f"title='{self.title}', "
             f"symbol_count={self.symbol_count}, "
             f"date='{self.date}') "
-
             f">"
         )
 
