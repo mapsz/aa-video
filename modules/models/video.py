@@ -10,6 +10,9 @@ class Video(Base):
 
     TYPE_SOURCE = "source"
     TYPE_SOURCE_VERTICAL = "source_vertical"
+    TYPE_SOURCE_SPLITED_60 = "source_splited_60"
+    TYPE_SOURCE_SPLITED_90 = "source_splited_90"
+    TYPE_SOURCE_SPLITED_120 = "source_splited_120"
 
     id = Column(Integer, primary_key=True)
     source = Column(String)
