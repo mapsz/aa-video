@@ -87,30 +87,6 @@ class Reddit:
 
         return comments
 
-    def pick_comments_by_symbol_count(self, thread, comments, symbol_count):
-        print(f"Pick Comments lenght-{symbol_count}")
-        total_length = 0
-        max_comment_length = symbol_count / 3
-        print(f"--max lenght - {max_comment_length}")
-        for comment in comments:
-            if (symbol_count < 20):
-                break
-
-            comment_length = len(comment.text)
-
-            if \
-            comment_length < max_comment_length and \
-            comment_length < symbol_count + 20 and \
-            comment.text != "[removed]":
-                thread.comments.append(comment)
-                symbol_count -= comment_length
-                total_length += comment_length
-                print(f"--comment - {comment_length}")
-                print(f"--left - {symbol_count}")
-
-        print(f"--total - {total_length}\n")
-        return thread, total_length
-
     def save_thread_to_file(self, thread, comments, symbol_count, filename):
         folder_path = "storage"
         os.makedirs(folder_path, exist_ok=True)

@@ -8,7 +8,7 @@ from modules.models import Comment
 from modules.models import Video
 from modules import Reddit
 from datetime import datetime
-import textwrap
+import textwrap, copy
 import os
 import time
 from PIL import ImageFont, ImageDraw, Image
@@ -25,7 +25,7 @@ session = get_session()
 
 while 1:
     # Youtube Videos Download
-    if 1:
+    if 0:
         VideoManager.files_to_db(session)
 
         videos = session.query(Video).filter_by(
@@ -40,7 +40,7 @@ while 1:
         VideoManager.files_to_db(session)
 
     # Source Videos To Vertical
-    if 1:
+    if 0:
         videos = session.query(Video).filter(
             Video.source == Video.SOURCE_YOUTUBE,
             Video.type == Video.TYPE_SOURCE,
@@ -61,7 +61,7 @@ while 1:
         VideoManager.files_to_db(session)
 
     # Source Vertical Videos Split
-    if 1:
+    if 0:
         videos = session.query(Video).filter(
             Video.source == Video.SOURCE_YOUTUBE,
             Video.type == Video.TYPE_SOURCE_VERTICAL,
@@ -91,7 +91,7 @@ while 1:
         VideoManager.files_to_db(session)
 
     # Update Threads
-    if 1:
+    if 0:
         last_comment_date = Comment.get_last_comment_date(session)
         if last_comment_date == None or (datetime.now() - last_comment_date).total_seconds() / 3600 > 24:
             reddit = Reddit()
@@ -130,8 +130,39 @@ while 1:
                 exit()
             videos[duration] = _videos[0]
 
-    # Make final video
+    # Pick comments by seconds
+    if 1:
+        durations = [
+            Video.DURATION_60,
+            Video.DURATION_90,
+            Video.DURATION_120,
+        ]
+        durationThreads = {}
+        threadModul = Thread()
+        baseThread = threadModul.get(session, thread.id)
+        for duration in durations:
+            thread = copy.deepcopy(baseThread)
+            comments, total_length = ThreadManager.pick_thread_by_max_seconds(thread, duration)
+            thread.comments = comments
+            durationThreads[duration] = thread
 
+    # To mp3s
+    if 1:
+        for key, thread in durationThreads.items():
+            TextToSpeech.thread_to_audios(thread)
+
+    # Make Full mp3s
+    for duration, thread in durationThreads.items():
+        length, map = TextToSpeech.get_thread_audios_lenght(thread)
+        print(length, map)
+
+        pause = TextToSpeech.adjust_comments_by_duration(thread, duration)
+        print(pause)
+
+        TextToSpeech.make_full_thread_audio(thread, duration)
+
+    # Make Images
+    
 
 
     exit()

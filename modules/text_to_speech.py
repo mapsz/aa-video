@@ -1,5 +1,6 @@
 from elevenlabs import Voice, VoiceSettings, save
 from elevenlabs.client import ElevenLabs
+from config import min_pause, max_pause
 from numpy import append
 from config import elevenlabs_config
 from modules.models import thread
@@ -13,13 +14,13 @@ class TextToSpeech:
     def thread_to_audios(thread):
         elevenlabs = Elevenlabs()
 
-        filepath = f"storage/audio/threads/{thread.identifier}"
+        filepath = f"storage/audio/threads/{thread.identifier}.mp3"
         if not os.path.exists(filepath):
             make_dir(filepath)
             elevenlabs.generate(thread.title, filepath)
 
         for comment in thread.comments:
-            filepath = f"storage/audio/comments/{comment.identifier}"
+            filepath = f"storage/audio/comments/{comment.identifier}.mp3"
             if not os.path.exists(filepath):
                 make_dir(filepath)
                 elevenlabs.generate(comment.text, filepath)
@@ -42,13 +43,13 @@ class TextToSpeech:
 
         return length, map
 
-    def get_thread_suitable_pauses_lenght(thread):
+    def get_thread_suitable_pauses_lenght(thread, duration):
         audios_lenght ,_ = TextToSpeech.get_thread_audios_lenght(thread)
-        time_for_pauses = 60000 - audios_lenght
+        time_for_pauses = (duration * 1000) - audios_lenght
         return (time_for_pauses / (len(thread.comments) + 1 + 1 + 1))
 
-    def make_full_thread_audio(thread, pause_lenght = 1000):
-        print(pause_lenght)
+    def make_full_thread_audio(thread, duration):
+        pause_lenght = TextToSpeech.get_thread_suitable_pauses_lenght(thread, duration)
         mp3_files = [f"storage/audio/threads/{thread.identifier}.mp3"]
         for comment in thread.comments:
             mp3_files.append(f"storage/audio/comments/{comment.identifier}.mp3")
@@ -69,7 +70,7 @@ class TextToSpeech:
 
         print(combined_audio)
 
-        filepath = f"storage/audio/threads/full/{thread.identifier}.mp3"
+        filepath = f"storage/audio/threads/full/{duration}/{thread.identifier}.mp3"
         make_dir(filepath)
         combined_audio.export(filepath, format="mp3")
 
@@ -88,13 +89,39 @@ class TextToSpeech:
 
         return threadTimings
 
+    def adjust_comments_by_duration(thread, duration = 60):
+        suitable_pauses = TextToSpeech.get_thread_suitable_pauses_lenght(thread, duration)
+        print(suitable_pauses)
+        if suitable_pauses > max_pause:
+            current_lenght, map = TextToSpeech.get_thread_audios_lenght(thread)
+            print(f"bad pauses - {thread.identifier}")
+            exit()
+            return False
+
+        if suitable_pauses < min_pause:
+            print(suitable_pauses)
+            print(f"bad pauses - {thread.identifier}")
+            exit()
+            return False
+
+        return True
+
 class Elevenlabs:
     def __init__(self):
         self.client = ElevenLabs(
             api_key=elevenlabs_config["api_key"],
         )
 
+    def get_remaining(self):
+        return int(self.client.user.get_subscription().character_count)
+
+    def check_remaining_by_text(self, text):
+        if len(text) > self.get_remaining():
+            print("Elevenlabs empty")
+            exit()
+
     def generate(self, text, filepath, voice_id = 'pNInz6obpgDQGcFmaJgB'):
+        self.check_remaining_by_text(text)
         audio = self.client.generate(
             text=text,
             voice=Voice(
@@ -103,6 +130,6 @@ class Elevenlabs:
             )
         )
 
-        save(audio, filepath + ".mp3")
+        save(audio, filepath)
 
-        print(f"{filepath}.mp3 saved successfully!")
+        print(f"{filepath} saved successfully!")
