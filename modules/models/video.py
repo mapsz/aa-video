@@ -10,14 +10,19 @@ class Video(Base):
 
     TYPE_SOURCE = "source"
     TYPE_SOURCE_VERTICAL = "source_vertical"
-    TYPE_SOURCE_SPLITED_60 = "source_splited_60"
-    TYPE_SOURCE_SPLITED_90 = "source_splited_90"
-    TYPE_SOURCE_SPLITED_120 = "source_splited_120"
+    TYPE_SOURCE_SPLITED = "source_splited"
+    TYPE_FINAL = "final"
+
+    DURATION_60 = 60
+    DURATION_90 = 90
+    DURATION_120 = 120
 
     id = Column(Integer, primary_key=True)
     source = Column(String)
     identifier = Column(String)
     type = Column(String)
+    duration = Column(Integer)
+    status = Column(String)
     filepath = Column(String)
     part = Column(Integer)
     date = Column(DateTime)
@@ -36,6 +41,8 @@ class Video(Base):
             f"source='{self.source}', "
             f"identifier='{self.identifier}', "
             f"type='{self.type}', "
+            f"duration='{self.type}', "
+            f"status='{self.status}', "
             f"filepath='{self.filepath}', "
             f"part={self.part}, "
             f"date='{self.date}') "

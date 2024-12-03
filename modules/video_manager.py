@@ -13,40 +13,44 @@ change_settings({"FFMPEG_BINARY": "libs/ffmpeg.exe"})
 
 class VideoManager:
     def files_to_db(session):
-        types = [
-            Video.TYPE_SOURCE,
-            Video.TYPE_SOURCE_VERTICAL,
-            Video.TYPE_SOURCE_SPLITED_60,
-            Video.TYPE_SOURCE_SPLITED_90,
-            Video.TYPE_SOURCE_SPLITED_120,
-        ]
-        for _type in types:
-            folder_path = f"storage/video/{_type}/{Video.SOURCE_YOUTUBE}/*.mp4"
-            files = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(folder_path)]
+        for root, dirs, files in os.walk(f"storage/video"):
             for file in files:
-                identifier = re.sub(r"__part_\d+__", "", file)
+                file_path = os.path.join(root, file)
+                filename, file_ext = os.path.splitext(file_path)
+                filename = os.path.basename(filename)
+                if file_ext != ".mp4":
+                    continue
+                folders = os.path.dirname(file_path).split(os.sep)
+                folders = [folder for folder in folders if folder not in ['storage', 'video', 'storage/video']]
+                _type = folders[0]
+                source = folders[1]
+                duration = folders[2] if len(folders) > 2 else None
+
                 part = None
+                identifier = re.sub(r"__part_\d+__", "", filename)
                 match = re.search(r"__part_(\d+)__", file)
-                if match:
-                    part = int(match.group(1))
+                if match: part = int(match.group(1))
 
                 existing_video = session.query(Video).filter_by(
-                    source=Video.SOURCE_YOUTUBE,
                     identifier=identifier,
                     type=_type,
+                    source=source,
+                    duration=duration,
                     part=part,
                 ).first()
 
                 if existing_video: continue
 
                 video = Video(
-                    source=Video.SOURCE_YOUTUBE,
                     identifier=identifier,
                     type=_type,
-                    filepath=f"storage/video/{_type}/{Video.SOURCE_YOUTUBE}/{file}.mp4",
+                    source=source,
+                    duration=duration,
                     part=part,
+                    filepath=file_path,
                 )
                 session.add(video)
+                print(f"path - {file_path}; type - {_type}; source - {source}; duration - {duration}; identifier - {identifier};  file_ext - {file_ext};  part - {part}")
 
         session.commit()
 
@@ -128,8 +132,8 @@ class VideoManager:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download(url)
 
-    def split_video(videoModule, video_type):
-        chunk_length = int(video_type.split('_')[-1])
+    def split_video(videoModule, duration):
+        chunk_length = duration
         with VideoFileClip(videoModule.filepath) as video:
             video_duration = video.duration
 
@@ -140,7 +144,7 @@ class VideoManager:
             end_time = start_time + chunk_length
             if (end_time > video_duration):
                 return
-            output_filepath = f"storage/video/{video_type}/{Video.SOURCE_YOUTUBE}/{video_filename}__part_{chunk_number}__.mp4"
+            output_filepath = f"storage/video/{Video.TYPE_SOURCE_SPLITED}/{Video.SOURCE_YOUTUBE}/{duration}/{video_filename}__part_{chunk_number}__.mp4"
             make_dir(output_filepath)
             ffmpeg_extract_subclip(videoModule.filepath, start_time, end_time, output_filepath)
             start_time += chunk_length

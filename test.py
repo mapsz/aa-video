@@ -15,7 +15,7 @@ from PIL import ImageFont, ImageDraw, Image
 from modules import ComicBubble
 from modules import get_session, make_dir
 from modules import Elevenlabs
-from modules import TextToSpeech, VideoManager
+from modules import TextToSpeech, VideoManager, ThreadManager
 from pydub import AudioSegment
 from pydub.utils import which
 from modules import make_dir
@@ -25,89 +25,90 @@ session = get_session()
 
 while 1:
     # Youtube Videos Download
-    VideoManager.files_to_db(session)
+    if 1:
+        VideoManager.files_to_db(session)
 
-    videos = session.query(Video).filter_by(
-        source=Video.SOURCE_YOUTUBE,
-        type=Video.TYPE_SOURCE,
-        filepath=None,
-    ).all()
+        videos = session.query(Video).filter_by(
+            source=Video.SOURCE_YOUTUBE,
+            type=Video.TYPE_SOURCE,
+            filepath=None,
+        ).all()
 
-    for video in videos:
-        VideoManager.yt_download(VideoManager.identifier_to_yt_url(video.identifier))
+        for video in videos:
+            VideoManager.yt_download(VideoManager.identifier_to_yt_url(video.identifier))
 
-    VideoManager.files_to_db(session)
+        VideoManager.files_to_db(session)
 
     # Source Videos To Vertical
-    videos = session.query(Video).filter(
-        Video.source == Video.SOURCE_YOUTUBE,
-        Video.type == Video.TYPE_SOURCE,
-        Video.filepath.isnot(None)
-    ).all()
+    if 1:
+        videos = session.query(Video).filter(
+            Video.source == Video.SOURCE_YOUTUBE,
+            Video.type == Video.TYPE_SOURCE,
+            Video.filepath.isnot(None)
+        ).all()
 
-    for video in videos:
-        existing_video = session.query(Video).filter_by(
-            source=Video.SOURCE_YOUTUBE,
-            identifier=video.identifier,
-            type=Video.TYPE_SOURCE_VERTICAL
-        ).first()
-
-        if existing_video: continue
-
-        VideoManager.to_vertical(video)
-
-    VideoManager.files_to_db(session)
-
-    # Source Vertical Videos Split
-    videos = session.query(Video).filter(
-        Video.source == Video.SOURCE_YOUTUBE,
-        Video.type == Video.TYPE_SOURCE_VERTICAL,
-        Video.filepath.isnot(None)
-    ).all()
-
-    types = [
-        Video.TYPE_SOURCE_SPLITED_60,
-        Video.TYPE_SOURCE_SPLITED_90,
-        Video.TYPE_SOURCE_SPLITED_120,
-    ]
-
-    for _type in types:
         for video in videos:
             existing_video = session.query(Video).filter_by(
                 source=Video.SOURCE_YOUTUBE,
                 identifier=video.identifier,
-                type=_type,
+                type=Video.TYPE_SOURCE_VERTICAL
             ).first()
 
             if existing_video: continue
 
-            VideoManager.split_video(video, _type)
+            VideoManager.to_vertical(video)
 
-    VideoManager.files_to_db(session)
+        VideoManager.files_to_db(session)
+
+    # Source Vertical Videos Split
+    if 1:
+        videos = session.query(Video).filter(
+            Video.source == Video.SOURCE_YOUTUBE,
+            Video.type == Video.TYPE_SOURCE_VERTICAL,
+            Video.filepath.isnot(None)
+        ).all()
+
+        durations = [
+            Video.DURATION_60,
+            Video.DURATION_90,
+            Video.DURATION_120,
+        ]
+
+        for duration in durations:
+            for video in videos:
+                existing_video = session.query(Video).filter_by(
+                    source=Video.SOURCE_YOUTUBE,
+                    identifier=video.identifier,
+                    type=Video.TYPE_SOURCE_SPLITED,
+                    duration=Video.duration,
+                ).first()
+
+                if existing_video: continue
+
+                VideoManager.split_video(video, duration)
+
+
+        VideoManager.files_to_db(session)
 
     # Update Threads
-    last_comment_date = Comment.get_last_comment_date(session)
-    if last_comment_date == None or (datetime.now() - last_comment_date).total_seconds() / 3600 > 24:
-        reddit = Reddit()
-        threads = reddit.fetch_top_threads("AskReddit")
+    if 1:
+        last_comment_date = Comment.get_last_comment_date(session)
+        if last_comment_date == None or (datetime.now() - last_comment_date).total_seconds() / 3600 > 24:
+            reddit = Reddit()
+            threads = reddit.fetch_top_threads("AskReddit")
 
-        saved_threads = []
-        for thread in threads:
-            saved_threads.append(Thread.add_if_not_exists(session, thread))
-        threads = saved_threads
+            saved_threads = []
+            for thread in threads:
+                saved_threads.append(Thread.add_if_not_exists(session, thread))
+            threads = saved_threads
 
-        for thread in threads:
-            comments = reddit.fetch_popular_comments(thread)
-            for comment in comments:
-                Comment.add_if_not_exists(session, comment, thread.id)
+            for thread in threads:
+                comments = reddit.fetch_popular_comments(thread)
+                for comment in comments:
+                    Comment.add_if_not_exists(session, comment, thread.id)
 
-    # threads to images
-
-    # threads to audio
-
-    # video with audio
-
-    # video with audio to final
+    # Make final video
+    # ThreadManager.pick_comments_by_symbol_count()
 
     exit()
     time.sleep(1)
