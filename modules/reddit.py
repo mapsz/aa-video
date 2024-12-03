@@ -13,6 +13,27 @@ class Reddit:
             user_agent=reddit_config["user_agent"] \
         )
 
+    def fetch_top_threads(self, subreddit_name, limit=100):
+        subreddit = self.reddit.subreddit(subreddit_name)
+
+        top_threads = subreddit.top(time_filter="week", limit=100)
+
+        sorted_threads = sorted(top_threads, key=lambda x: x.score, reverse=True)[:limit]
+
+        threads = [
+            Thread(
+                source = Thread.REDDIT,
+                identifier = submission.id,
+                author = submission.author.name if submission.author else "[deleted]",
+                score = int(submission.score),
+                title = submission.title,
+                date = datetime.fromtimestamp(submission.created_utc)
+            )
+            for submission in sorted_threads
+        ]
+
+        return threads
+
     def fetch_top_threads_for_date(self, subreddit_name, year, month, day, limit=5):
         start_time = datetime(year, month, day)
         end_time = start_time + timedelta(days=1)
@@ -42,26 +63,29 @@ class Reddit:
 
         return threads
 
-    def fetch_popular_comments(self, thread, comment_limit=10):
+    def fetch_popular_comments(self, thread, comment_limit=50):
+        print("fetch comments - thread.identifier")
         submission = self.reddit.submission(id=thread.identifier)
         submission.comments.replace_more(limit=0)
 
         popular_comments = sorted(submission.comments, key=lambda comment: comment.score, reverse=True)
 
-        comments_data = []
-        for submission in popular_comments:
-            comment_data = Comment(
-                thread_id = thread.id,
-                identifier = submission.id,
-                author = submission.author.name if submission.author else "[deleted]",
-                score = int(submission.score),
-                text = submission.body,
-                date = datetime.fromtimestamp(submission.created_utc),
-                symbol_count = len(submission.body)
-            )
-            comments_data.append(comment_data)
+        top_comments = popular_comments[:comment_limit]
 
-        return comments_data
+        comments = []
+        for submission in top_comments:
+            comment = Comment(
+                thread_id=thread.id,
+                identifier=submission.id,
+                author=submission.author.name if submission.author else "[deleted]",
+                score=int(submission.score),
+                text=submission.body,
+                date=datetime.fromtimestamp(submission.created_utc),
+                symbol_count=len(submission.body)
+            )
+            comments.append(comment)
+
+        return comments
 
     def pick_comments_by_symbol_count(self, thread, comments, symbol_count):
         print(f"Pick Comments lenght-{symbol_count}")

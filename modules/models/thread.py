@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship, joinedload
+from sqlalchemy.exc import IntegrityError
 from ._base import Base
 from .association import thread_video_association
 
@@ -51,3 +52,20 @@ class Thread(Base):
         thread.symbol_count = symbol_count
 
         return thread
+
+    def add_if_not_exists(session, thread):
+        exists = session.query(Thread).filter_by(
+            source=thread.source,
+            identifier=thread.identifier,
+        ).first()
+
+        if not exists:
+            try:
+                session.add(thread)
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+
+            return thread
+        else:
+            return exists
