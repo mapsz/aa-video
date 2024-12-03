@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, text
 from sqlalchemy.orm import relationship
 from ._base import Base
 from .association import thread_video_association
@@ -47,4 +47,29 @@ class Video(Base):
             f"part={self.part}, "
             f"date='{self.date}') "
             f">"
+        )
+
+    def get_unused(session, duration):
+        query = text(
+            f"SELECT v.* "
+            f"FROM videos v "
+            f"LEFT JOIN videos sv "
+                f"ON sv.identifier = v.identifier "
+                f"AND sv.source = v.source "
+                f"AND sv.part = v.part "
+                f"AND sv.duration = v.duration "
+                f"AND sv.\"type\" = :type_final "
+            f"WHERE v.source = :source_youtube "
+                f"AND v.\"type\" = :type_source_splited "
+                f"AND v.duration = :duration "
+                f"AND sv.identifier IS NULL "
+        )
+        return session.execute(
+            query,
+            {
+                'type_final': Video.TYPE_FINAL,
+                'source_youtube': Video.SOURCE_YOUTUBE,
+                'type_source_splited': Video.TYPE_SOURCE_SPLITED,
+                'duration': duration,
+            }
         )

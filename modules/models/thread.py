@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, text
 from sqlalchemy.orm import relationship, joinedload
 from sqlalchemy.exc import IntegrityError
 from ._base import Base
@@ -69,3 +69,14 @@ class Thread(Base):
             return thread
         else:
             return exists
+
+    def get_unused(session):
+        query = text(
+            "SELECT t.* "
+            "FROM threads t "
+            "LEFT JOIN thread_video_association tv "
+            "ON t.id = tv.thread_id "
+            "WHERE tv.thread_id IS NULL "
+        )
+        return session.execute(query)
+

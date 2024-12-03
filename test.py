@@ -107,8 +107,32 @@ while 1:
                 for comment in comments:
                     Comment.add_if_not_exists(session, comment, thread.id)
 
+    # Get Unused Thread And Video
+    if 1:
+        # Get Unused Threads
+        threads = list(Thread.get_unused(session))
+        if len(threads) == 0:
+            print("no unused threads")
+            exit()
+        thread = threads[0]
+
+        # Get unused videos
+        durations = [
+            Video.DURATION_120,
+            Video.DURATION_90,
+            Video.DURATION_60,
+        ]
+        videos = {}
+        for duration in durations:
+            _videos = list(Video.get_unused(session, duration))
+            if len(_videos) == 0:
+                print(f"no unused {duration} video")
+                exit()
+            videos[duration] = _videos[0]
+
     # Make final video
-    # ThreadManager.pick_comments_by_symbol_count()
+
+
 
     exit()
     time.sleep(1)
