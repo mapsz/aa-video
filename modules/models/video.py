@@ -17,6 +17,8 @@ class Video(Base):
     DURATION_90 = 90
     DURATION_120 = 120
 
+    STATUS_READY = "ready"
+
     id = Column(Integer, primary_key=True)
     source = Column(String)
     identifier = Column(String)

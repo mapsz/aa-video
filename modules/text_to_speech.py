@@ -49,12 +49,11 @@ class TextToSpeech:
         return (time_for_pauses / (len(thread.comments) + 1 + 1 + 1))
 
     def make_full_thread_audio(thread, duration):
+        filepath = f"storage/audio/threads/full/{duration}/{thread.identifier}.mp3"
         pause_lenght = TextToSpeech.get_thread_suitable_pauses_lenght(thread, duration)
         mp3_files = [f"storage/audio/threads/{thread.identifier}.mp3"]
         for comment in thread.comments:
             mp3_files.append(f"storage/audio/comments/{comment.identifier}.mp3")
-
-        print(len(mp3_files))
 
         AudioSegment.ffmpeg = which("ffmpeg")
         combined_audio = AudioSegment.empty()
@@ -68,14 +67,10 @@ class TextToSpeech:
 
         combined_audio += AudioSegment.silent(duration=pause_lenght)
 
-        print(combined_audio)
-
-        filepath = f"storage/audio/threads/full/{duration}/{thread.identifier}.mp3"
         make_dir(filepath)
         combined_audio.export(filepath, format="mp3")
 
         print(f"Combined MP3 saved at {filepath}")
-        return True
 
     def get_thread_timing(thread):
         pause = TextToSpeech.get_thread_suitable_pauses_lenght(thread)
@@ -89,20 +84,14 @@ class TextToSpeech:
 
         return threadTimings
 
-    def adjust_comments_by_duration(thread, duration = 60):
+    def adjust_comments_by_duration(thread, duration):
         suitable_pauses = TextToSpeech.get_thread_suitable_pauses_lenght(thread, duration)
-        print(suitable_pauses)
+        print(f"{int(suitable_pauses)}")
         if suitable_pauses > max_pause:
-            current_lenght, map = TextToSpeech.get_thread_audios_lenght(thread)
-            print(f"bad pauses - {thread.identifier}")
-            exit()
-            return False
+            return "+"
 
         if suitable_pauses < min_pause:
-            print(suitable_pauses)
-            print(f"bad pauses - {thread.identifier}")
-            exit()
-            return False
+            return "-"
 
         return True
 

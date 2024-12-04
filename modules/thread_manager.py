@@ -25,21 +25,22 @@ class ThreadManager:
         return comments, total_length
 
     def pick_thread_by_max_seconds(thread, seconds):
-        symbol_count = symbols_per_second * seconds
+        max_symbol_count = symbols_per_second * seconds
         pause_in_symbols = (symbols_per_second / 1000) * default_pause
         total_length = 0
         pause_count = 0
-        max_comment_length = symbol_count / 3
+        max_comment_length = max_symbol_count / 3
+        current_symbol_count = max_symbol_count
 
         thread.title = ThreadManager.filter_text(thread.title)
         title_length = len(thread.title)
-        symbol_count -= title_length + pause_in_symbols
+        current_symbol_count -= title_length + pause_in_symbols
         total_length += title_length
         pause_count += 1
 
         comments = []
         for comment in thread.comments:
-            if (symbol_count < 20):
+            if (current_symbol_count < 20):
                 break
 
             comment.text = ThreadManager.filter_text(comment.text)
@@ -48,16 +49,14 @@ class ThreadManager:
 
             if \
             comment_length < max_comment_length and \
-            comment_length < symbol_count + 20 and \
+            comment_length < current_symbol_count + 20 and \
             comment.text != "[removed]":
                 comments.append(comment)
-                symbol_count -= comment_length + pause_in_symbols
+                current_symbol_count -= comment_length + pause_in_symbols
                 total_length += comment_length
                 pause_count += 1
-                # print(f"--comment - {comment_length}")
-                # print(f"--left - {symbol_count}")
 
-        print(f"{symbols_per_second * seconds}; Total symbols- {total_length}; Pauses - {pause_count} ({pause_count * pause_in_symbols})")
+        print(f"Max symbols - {int(max_symbol_count)}; Total symbols- {total_length}; Pauses - {pause_count} ({int(pause_count * pause_in_symbols)})")
         return comments, total_length
 
     def filter_text(text):

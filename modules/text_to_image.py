@@ -183,7 +183,6 @@ class ComicBubble:
         image.save(f"{filepath}.png")
 
     def thread_to_images(self, thread):
-
         filepath = f"storage/images/threads/{thread.identifier}"
         if not os.path.exists(filepath):
             make_dir(filepath)

@@ -176,35 +176,32 @@ class VideoManager:
                 # ]
             )
 
-    def overlay_audio(video_filepath, audio_filepath):
+    def overlay_audio(video, audio_filepath):
         # Загрузка аудио
-        video = VideoFileClip(video_filepath)
+        # video = VideoFileClip(video_filepath)
 
         # Загрузка аудио
         audio = AudioFileClip(audio_filepath)
 
         # Установка аудио в видео
-        video_with_audio = video.set_audio(audio)
+        return video.set_audio(audio)
+        # video_with_audio = video.set_audio(audio)
 
         # Сохранение результата
 
-        filepath = f"storage/video/60/with_audio/{os.path.splitext(os.path.basename(video_filepath))[0]}_{os.path.splitext(os.path.basename(audio_filepath))[0]}.mp4"
-        make_dir(filepath)
-        video_with_audio.write_videofile(filepath)
+        # filepath = f"storage/video/60/with_audio/{os.path.splitext(os.path.basename(video_filepath))[0]}_{os.path.splitext(os.path.basename(audio_filepath))[0]}.mp4"
+        # make_dir(filepath)
+        # video_with_audio.write_videofile(filepath)
 
-    def overlay_thread_images(video_filepath, thread, thread_timing):
-        video = VideoFileClip(video_filepath)
-        pause = True
+    def overlay_thread_images(video, thread, thread_timing, pause_time):
         thread_title = True
         current_duration = 0
         images = []
         i = 0
+        print(len(thread.comments))
+        print(thread_timing)
+        current_duration += pause_time
         for thread_time in thread_timing:
-            if pause:
-                pause = False
-                current_duration += thread_time
-                continue
-
             if thread_title:
                 thread_title = False
                 image_filepath = f"storage/images/threads/{thread.identifier}.png"
@@ -234,11 +231,22 @@ class VideoManager:
             images.append(image_clip)
 
             current_duration += thread_time
-            pause = True
+            current_duration += pause_time
 
-        final = CompositeVideoClip([video] + images)
-        filepath = f"storage/video/60/final/{os.path.splitext(os.path.basename(video_filepath))[0]}.mp4"
+        return CompositeVideoClip([video] + images)
+        # final = CompositeVideoClip([video] + images)
+        # filepath = f"storage/video/60/final/{os.path.splitext(os.path.basename(video_filepath))[0]}.mp4"
+        # make_dir(filepath)
+        # final.write_videofile(filepath)
+
+        # return filepath
+
+    def write(video, filepath):
         make_dir(filepath)
-        final.write_videofile(filepath)
+        video.write_videofile(filepath)
 
-        return filepath
+    def create_video_clip(video_filepath):
+        return VideoFileClip(video_filepath)
+
+    def close_video_clip(video_clip):
+        video_clip.close()
