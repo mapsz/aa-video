@@ -138,8 +138,7 @@ while 1:
             Video.DURATION_120,
         ]
         durationThreads = {}
-        threadModul = Thread()
-        baseThread = threadModul.get(session, thread.id)
+        baseThread = Thread().get(session, thread.id)
         for duration in durations:
             thread = copy.deepcopy(baseThread)
             comments, total_length = ThreadManager.pick_thread_by_max_seconds(thread, duration)
@@ -151,18 +150,70 @@ while 1:
         for key, thread in durationThreads.items():
             TextToSpeech.thread_to_audios(thread)
 
+    # Adjust
+    if 1:
+        adjustedDurationThreads = {}
+        for duration, thread in durationThreads.items():
+            adjustedThread = thread
+            adjust = 0
+            while 1:
+                adjusting = TextToSpeech.adjust_comments_by_duration(adjustedThread, duration)
+                if adjusting == True: break
+                if adjusting == "+":
+                    new_duration = duration + adjust
+                if adjusting == "-":
+                    new_duration = duration - adjust
+
+                adjustedThread = copy.deepcopy(Thread().get(session, thread.id))
+
+                comments, total_length = ThreadManager.pick_thread_by_max_seconds(adjustedThread, new_duration)
+                adjustedThread.comments = comments
+                TextToSpeech.thread_to_audios(adjustedThread)
+
+                print(f"adjusting - {adjust} - {adjustedThread.identifier} - {duration}")
+                print(f"=====")
+                TextToSpeech.thread_to_audios(thread)
+                adjust += 0.1
+
+            adjustedDurationThreads[duration] = adjustedThread
+
+        durationThreads = adjustedDurationThreads
+
     # Make Full mp3s
     for duration, thread in durationThreads.items():
-        length, map = TextToSpeech.get_thread_audios_lenght(thread)
-        print(length, map)
-
-        pause = TextToSpeech.adjust_comments_by_duration(thread, duration)
-        print(pause)
-
         TextToSpeech.make_full_thread_audio(thread, duration)
 
     # Make Images
-    
+    if 1:
+        for duration, thread in durationThreads.items():
+            comic_bubble = ComicBubble()
+            comic_bubble.thread_to_images(thread)
+
+    #
+    for duration, thread in durationThreads.items():
+        length, map = TextToSpeech.get_thread_audios_lenght(thread)
+        pause = TextToSpeech.get_thread_suitable_pauses_lenght(thread, duration)
+        video_clip = VideoManager.create_video_clip(videos[duration].filepath)
+        video_clip = VideoManager.overlay_audio(video_clip, f"storage/audio/threads/full/{duration}/{thread.identifier}.mp3")
+        video_clip = VideoManager.overlay_thread_images(video_clip, thread, map, pause)
+        filepath = f"storage/video/final/{duration}/{videos[duration].identifier}_{thread.identifier}.mp4"
+        VideoManager.write(video_clip, filepath)
+        VideoManager.close_video_clip(video_clip)
+
+        video = Video(
+            source=videos[duration].source,
+            identifier=videos[duration].identifier,
+            part=videos[duration].part,
+            type=Video.TYPE_FINAL,
+            filepath=filepath,
+            duration=duration,
+            status=Video.STATUS_READY,
+        )
+        threadModul = Thread()
+        threadModul = threadModul.get(session, thread.id)
+        video.threads.append(threadModul)
+        session.add(video)
+        session.commit()
 
 
     exit()
