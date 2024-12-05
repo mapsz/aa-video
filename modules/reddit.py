@@ -64,7 +64,7 @@ class Reddit:
         return threads
 
     def fetch_popular_comments(self, thread, comment_limit=50):
-        print("fetch comments - thread.identifier")
+        print(f"fetch comments - {thread.identifier}")
         submission = self.reddit.submission(id=thread.identifier)
         submission.comments.replace_more(limit=0)
 

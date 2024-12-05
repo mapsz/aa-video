@@ -26,6 +26,9 @@ class VideoManager:
                 source = folders[1]
                 duration = folders[2] if len(folders) > 2 else None
 
+                if _type == "final":
+                    continue
+
                 part = None
                 identifier = re.sub(r"__part_\d+__", "", filename)
                 match = re.search(r"__part_(\d+)__", file)

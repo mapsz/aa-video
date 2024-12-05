@@ -13,7 +13,7 @@ elevenlabs_config = {
     # "api_key": "sk_594f7f35b3192db00948111fea35b8cf38fe38b093b7bbb4"
 }
 
-symbols_per_second = 16
+symbols_per_second = 17.5
 default_pause = 700
 min_pause = 500
 max_pause = 1000

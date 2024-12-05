@@ -102,7 +102,8 @@ class Elevenlabs:
         )
 
     def get_remaining(self):
-        return int(self.client.user.get_subscription().character_count)
+        subscription = self.client.user.get_subscription()
+        return int(subscription.character_limit) - int(subscription.character_count)
 
     def check_remaining_by_text(self, text):
         if len(text) > self.get_remaining():

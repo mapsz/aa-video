@@ -20,12 +20,44 @@ from pydub import AudioSegment
 from pydub.utils import which
 from modules import make_dir
 from moviepy.config import change_settings
+from mutagen.mp3 import MP3
+
+def test_current_comments_symbols_per_sec(session):
+    directory = f"storage/audio/comments"
+    items = os.listdir(directory)
+    files = [f for f in items if os.path.isfile(os.path.join(directory, f))]
+    count = 0
+    all = 0
+    max = 0
+    min = 999
+    for file in files:
+        identifier = file.replace(".mp3", "")
+        length = MP3(f"{directory}/{file}").info.length
+        comment = session.query(Comment).filter(Comment.identifier == identifier).first()
+        if comment == None: continue
+        text = ThreadManager.filter_text(comment.text)
+        if ThreadManager.is_bad_text(text): continue
+        text_lenght = ThreadManager.get_adjusted_text_symbols(text)
+        per_sec = text_lenght / length
+        all += per_sec
+        count += 1
+        max = per_sec if per_sec > max else max
+        min = per_sec if per_sec < min else min
+        print(f"{identifier} - {per_sec} - {length}")
+
+    print("===")
+    print(f"max - {max}")
+    print(f"min - {min}")
+    print(all / count)
+    exit()
 
 session = get_session()
 
+# test_current_comments_symbols_per_sec(session)
+
 while 1:
     # Youtube Videos Download
-    if 0:
+    if 1:
         VideoManager.files_to_db(session)
 
         videos = session.query(Video).filter_by(
@@ -39,8 +71,9 @@ while 1:
 
         VideoManager.files_to_db(session)
 
+
     # Source Videos To Vertical
-    if 0:
+    if 1:
         videos = session.query(Video).filter(
             Video.source == Video.SOURCE_YOUTUBE,
             Video.type == Video.TYPE_SOURCE,
@@ -61,7 +94,7 @@ while 1:
         VideoManager.files_to_db(session)
 
     # Source Vertical Videos Split
-    if 0:
+    if 1:
         videos = session.query(Video).filter(
             Video.source == Video.SOURCE_YOUTUBE,
             Video.type == Video.TYPE_SOURCE_VERTICAL,
@@ -91,7 +124,7 @@ while 1:
         VideoManager.files_to_db(session)
 
     # Update Threads
-    if 0:
+    if 1:
         last_comment_date = Comment.get_last_comment_date(session)
         if last_comment_date == None or (datetime.now() - last_comment_date).total_seconds() / 3600 > 24:
             reddit = Reddit()
@@ -156,7 +189,12 @@ while 1:
         for duration, thread in durationThreads.items():
             adjustedThread = thread
             adjust = 0
+            banned_comments = []
             while 1:
+                if adjust > 5:
+                    banned_comments.append(ThreadManager.get_most_stand_out_comment(adjustedThread))
+                    adjust = 0
+
                 adjusting = TextToSpeech.adjust_comments_by_duration(adjustedThread, duration)
                 if adjusting == True: break
                 if adjusting == "+":
@@ -166,14 +204,15 @@ while 1:
 
                 adjustedThread = copy.deepcopy(Thread().get(session, thread.id))
 
-                comments, total_length = ThreadManager.pick_thread_by_max_seconds(adjustedThread, new_duration)
+                comments, total_length = ThreadManager.pick_thread_by_max_seconds(adjustedThread, new_duration, banned_comments)
                 adjustedThread.comments = comments
                 TextToSpeech.thread_to_audios(adjustedThread)
 
-                print(f"adjusting - {adjust} - {adjustedThread.identifier} - {duration}")
+                print(f"adjusting - {round(adjust, 1)} - {adjustedThread.identifier} - {duration}")
                 print(f"=====")
                 TextToSpeech.thread_to_audios(thread)
                 adjust += 0.1
+                time.sleep(1)
 
             adjustedDurationThreads[duration] = adjustedThread
 
@@ -216,7 +255,7 @@ while 1:
         session.commit()
 
 
-    exit()
+    # exit()
     time.sleep(1)
 
 
@@ -291,3 +330,4 @@ while 1:
 # Video.overlay_audio(f"storage/video/60/VS3D8bgYhf4_1_with_overlay.mp4", f"storage/audio/threads/full/1go8oqk.mp3")
 
 # print(thread_timing)
+
