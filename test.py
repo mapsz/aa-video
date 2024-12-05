@@ -103,8 +103,8 @@ while 1:
 
         durations = [
             Video.DURATION_60,
-            Video.DURATION_90,
-            Video.DURATION_120,
+            # Video.DURATION_90,
+            # Video.DURATION_120,
         ]
 
         for duration in durations:
@@ -150,11 +150,6 @@ while 1:
         thread = threads[0]
 
         # Get unused videos
-        durations = [
-            Video.DURATION_120,
-            Video.DURATION_90,
-            Video.DURATION_60,
-        ]
         videos = {}
         for duration in durations:
             _videos = list(Video.get_unused(session, duration))
@@ -165,11 +160,6 @@ while 1:
 
     # Pick comments by seconds
     if 1:
-        durations = [
-            Video.DURATION_60,
-            Video.DURATION_90,
-            Video.DURATION_120,
-        ]
         durationThreads = {}
         baseThread = Thread().get(session, thread.id)
         for duration in durations:
