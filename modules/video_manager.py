@@ -91,17 +91,25 @@ class VideoManager:
     def yt_dlp_select_format(ctx):
         formats = ctx.get('formats')[::-1]
 
+        best_height = False
+        for format in formats:
+            if "height" in format and format["video_ext"] == "mp4":
+                if (best_height == False): best_height = format["height"]
+                if (format["height"] == 1080):
+                    best_height = format["height"]
+
+                if (best_height != 1080 and format["height"] > best_height):
+                    best_height = format["height"]
+
         best_video = False
-        best_audio = False
         for format in formats:
             if "height" in format and format["video_ext"] == "mp4":
                 if (best_video == False): best_video = format
-                if(format["height"] == 1080):
+                if (format["height"] == best_height and format["vbr"] > best_video["vbr"]):
                     best_video = format
 
-                if (format["height"] > best_video["height"] and best_video["height"] != 1080):
-                    best_video = format
-
+        best_audio = False
+        for format in formats:
             if not "height" in format and format["audio_ext"] == "mp4":
                 if (best_audio == False): best_audio = format
                 if (best_audio["quality"] > best_audio["quality"]):
@@ -122,12 +130,7 @@ class VideoManager:
             'format': VideoManager.yt_dlp_select_format,
             'outtmpl': filepath,
             'postprocessors': [
-                {'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'},
                 {'key': 'FFmpegMetadata'}
-            ],
-            'postprocessor_args': [
-                '-c:v', 'libx264',
-                '-c:a', 'aac',
             ],
             'prefer_ffmpeg': True,
         }
@@ -170,14 +173,7 @@ class VideoManager:
             filepath = f"storage/video/{Video.TYPE_SOURCE_VERTICAL}/{Video.SOURCE_YOUTUBE}/{video_filename}.mp4"
             make_dir(filepath)
 
-            video_resized.write_videofile(
-                filepath,
-                # codec="libx264",
-                # audio_codec="aac",
-                # ffmpeg_params=[
-                #     "-pix_fmt", "yuv420p"
-                # ]
-            )
+            VideoManager.write(video_resized, filepath)
 
     def overlay_audio(video, audio_filepath):
         # Загрузка аудио
@@ -246,7 +242,14 @@ class VideoManager:
 
     def write(video, filepath):
         make_dir(filepath)
-        video.write_videofile(filepath)
+        video.write_videofile(
+            filepath,
+            codec="libx264",
+            audio_codec="aac",
+            fps=video.fps,
+            preset="ultrafast",
+            ffmpeg_params=["-crf", "0"],
+        )
 
     def create_video_clip(video_filepath):
         return VideoFileClip(video_filepath)
