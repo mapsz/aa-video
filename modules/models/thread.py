@@ -77,6 +77,7 @@ class Thread(Base):
             "LEFT JOIN thread_video_association tv "
             "ON t.id = tv.thread_id "
             "WHERE tv.thread_id IS NULL "
+            "ORDER BY t.id DESC "
         )
         return session.execute(query)
 
