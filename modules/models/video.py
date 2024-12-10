@@ -65,6 +65,7 @@ class Video(Base):
                 f"AND v.\"type\" = :type_source_splited "
                 f"AND v.duration = :duration "
                 f"AND sv.identifier IS NULL "
+            f"ORDER BY RANDOM() "
         )
         return session.execute(
             query,
