@@ -40,9 +40,23 @@ class VideoManager:
                     source=source,
                     duration=duration,
                     part=part,
+                    filepath=file_path,
                 ).first()
 
                 if existing_video: continue
+
+                no_path_video = session.query(Video).filter_by(
+                    identifier=identifier,
+                    type=_type,
+                    source=source,
+                    duration=duration,
+                    part=part,
+                    filepath=None,
+                ).first()
+
+                if no_path_video:
+                    no_path_video.filepath = file_path
+                    continue
 
                 video = Video(
                     identifier=identifier,
@@ -247,8 +261,8 @@ class VideoManager:
             codec="libx264",
             audio_codec="aac",
             fps=video.fps,
-            preset="ultrafast",
-            ffmpeg_params=["-crf", "0"],
+            preset="slow",
+            # ffmpeg_params=["-crf", "0"],
         )
 
     def create_video_clip(video_filepath):

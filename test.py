@@ -71,7 +71,6 @@ while 1:
 
         VideoManager.files_to_db(session)
 
-
     # Source Videos To Vertical
     if 1:
         videos = session.query(Video).filter(

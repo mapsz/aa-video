@@ -52,15 +52,12 @@ class ThreadManager:
 
             comment.text = ThreadManager.filter_text(comment.text)
 
-            if(ThreadManager.is_bad_text(comment.text)):
+            if ThreadManager.is_bad_text(comment.text):
                 continue
 
             comment_length = ThreadManager.get_adjusted_text_symbols(comment.text)
 
-            if \
-            comment_length < max_comment_length and \
-            comment_length < current_symbol_count_left + 20 and \
-            comment.text != "[removed]":
+            if comment_length < max_comment_length and comment_length < current_symbol_count_left + 20:
                 comments.append(comment)
                 current_symbol_count_left -= comment_length + pause_in_symbols
                 total_length += comment_length
@@ -75,6 +72,12 @@ class ThreadManager:
         return text
 
     def is_bad_text(text):
+        if "[deleted]" == text:
+            return True
+
+        if "[removed]" == text:
+            return True
+
         if "_" in text:
             return True
 
