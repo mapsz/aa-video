@@ -43,7 +43,7 @@ class Video(Base):
             f"source='{self.source}', "
             f"identifier='{self.identifier}', "
             f"type='{self.type}', "
-            f"duration='{self.type}', "
+            f"duration='{self.duration}', "
             f"status='{self.status}', "
             f"filepath='{self.filepath}', "
             f"part={self.part}, "
