@@ -8,6 +8,7 @@ from modules import make_dir
 from mutagen.mp3 import MP3
 from pydub import AudioSegment
 from pydub.utils import which
+from modules.utils.helpers import dd
 import os
 
 class TextToSpeech:

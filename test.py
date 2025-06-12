@@ -22,6 +22,7 @@ from modules import make_dir
 from moviepy.config import change_settings
 from mutagen.mp3 import MP3
 
+
 def test_current_comments_symbols_per_sec(session):
     directory = f"storage/audio/comments"
     items = os.listdir(directory)
@@ -51,14 +52,15 @@ def test_current_comments_symbols_per_sec(session):
     print(all / count)
     exit()
 
+
 session = get_session()
 
 # test_current_comments_symbols_per_sec(session)
 
 while 1:
     durations = [
-        # Video.DURATION_60,
-        Video.DURATION_90,
+        Video.DURATION_60,
+        # Video.DURATION_90,
         # Video.DURATION_120,
     ]
 
@@ -124,7 +126,8 @@ while 1:
     # Update Threads
     if 1:
         last_comment_date = Comment.get_last_comment_date(session)
-        if last_comment_date == None or (datetime.now() - last_comment_date).total_seconds() / 3600 > 24:
+        if (last_comment_date is None or
+                (datetime.now() - last_comment_date).total_seconds() / 3600 > 24):
             reddit = Reddit()
             threads = reddit.fetch_top_threads("AskReddit")
 
@@ -162,7 +165,9 @@ while 1:
         baseThread = Thread().get(session, thread.id)
         for duration in durations:
             thread = copy.deepcopy(baseThread)
-            comments, total_length = ThreadManager.pick_thread_by_max_seconds(thread, duration)
+            comments, total_length = ThreadManager.pick_thread_by_max_seconds(
+                thread, duration
+            )
             thread.comments = comments
             durationThreads[duration] = thread
 
@@ -180,11 +185,18 @@ while 1:
             banned_comments = []
             while 1:
                 if adjust > 5:
-                    banned_comments.append(ThreadManager.get_most_stand_out_comment(adjustedThread))
+                    banned_comments.append(
+                        ThreadManager.get_most_stand_out_comment(
+                            adjustedThread
+                        )
+                    )
                     adjust = 0
 
-                adjusting = TextToSpeech.adjust_comments_by_duration(adjustedThread, duration)
-                if adjusting == True: break
+                adjusting = TextToSpeech.adjust_comments_by_duration(
+                    adjustedThread, duration
+                )
+                if adjusting is True:
+                    break
                 if adjusting == "+":
                     new_duration = duration + adjust
                 if adjusting == "-":
@@ -192,12 +204,20 @@ while 1:
 
                 adjustedThread = copy.deepcopy(Thread().get(session, thread.id))
 
-                comments, total_length = ThreadManager.pick_thread_by_max_seconds(adjustedThread, new_duration, banned_comments)
+                comments, total_length = (
+                    ThreadManager.pick_thread_by_max_seconds(
+                        adjustedThread, new_duration, banned_comments
+                    )
+                )
                 adjustedThread.comments = comments
                 TextToSpeech.thread_to_audios(adjustedThread)
 
-                print(f"adjusting - {round(adjust, 1)} - {adjustedThread.identifier} - {duration}")
-                print(f"=====")
+                print(
+                    f"adjusting - {round(adjust, 1)} - "
+                    f"{adjustedThread.identifier} - {duration}"
+                    f"\nBanned comments: {banned_comments}"
+                    f"\n=====\n"
+                )
                 TextToSpeech.thread_to_audios(thread)
                 adjust += 0.1
                 time.sleep(1)
@@ -219,11 +239,24 @@ while 1:
     #
     for duration, thread in durationThreads.items():
         length, map = TextToSpeech.get_thread_audios_lenght(thread)
-        pause = TextToSpeech.get_thread_suitable_pauses_lenght(thread, duration)
+        pause = TextToSpeech.get_thread_suitable_pauses_lenght(
+            thread, duration
+        )
         video_clip = VideoManager.create_video_clip(videos[duration].filepath)
-        video_clip = VideoManager.overlay_audio(video_clip, f"storage/audio/threads/full/{duration}/{thread.identifier}.mp3")
-        video_clip = VideoManager.overlay_thread_images(video_clip, thread, map, pause)
-        filepath = f"storage/video/final/{duration}/{videos[duration].identifier}_{thread.identifier}.mp4"
+        video_clip = VideoManager.overlay_audio(
+            video_clip,
+            f"storage/audio/threads/full/{duration}/{thread.identifier}.mp3"
+        )
+        video_clip = VideoManager.overlay_thread_images(
+            video_clip,
+            thread,
+            map,
+            pause
+        )
+        filepath = (
+            f"storage/video/final/{duration}/"
+            f"{videos[duration].identifier}_{thread.identifier}.mp4"
+        )
         VideoManager.write(video_clip, filepath)
         VideoManager.close_video_clip(video_clip)
 
@@ -241,7 +274,6 @@ while 1:
         video.threads.append(threadModul)
         session.add(video)
         session.commit()
-
 
     # exit()
     time.sleep(1)

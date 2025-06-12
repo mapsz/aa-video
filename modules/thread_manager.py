@@ -55,15 +55,23 @@ class ThreadManager:
             if ThreadManager.is_bad_text(comment.text):
                 continue
 
-            comment_length = ThreadManager.get_adjusted_text_symbols(comment.text)
+            comment_length = ThreadManager.get_adjusted_text_symbols(
+                comment.text
+            )
 
-            if comment_length < max_comment_length and comment_length < current_symbol_count_left + 20:
+            if (comment_length < max_comment_length and
+                    comment_length < current_symbol_count_left + 20):
                 comments.append(comment)
                 current_symbol_count_left -= comment_length + pause_in_symbols
                 total_length += comment_length
                 pause_count += 1
 
-        print(f"Max symbols - {int(max_symbol_count)}; Total symbols- {total_length}; Pauses - {pause_count} ({int(pause_count * pause_in_symbols)})")
+        print(
+            f"Max symbols - {int(max_symbol_count)}; "
+            f"Total symbols - {total_length}; "
+            f"Pauses Count - {pause_count}; "
+            f"Pause in Symbols - ({int(pause_count * pause_in_symbols)})"
+        )
         return comments, total_length
 
     def filter_text(text):
