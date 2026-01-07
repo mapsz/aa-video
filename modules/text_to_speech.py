@@ -9,6 +9,8 @@ from mutagen.mp3 import MP3
 from pydub import AudioSegment
 from pydub.utils import which
 from modules.utils.helpers import dd
+from elevenlabs.core.api_error import ApiError
+import time
 import os
 
 class TextToSpeech:
@@ -103,8 +105,16 @@ class Elevenlabs:
         )
 
     def get_remaining(self):
-        subscription = self.client.user.get_subscription()
-        return int(subscription.character_limit) - int(subscription.character_count)
+        while True:
+            try:
+                subscription = self.client.user.get_subscription()
+                return int(subscription.character_limit) - int(subscription.character_count)
+            except ApiError as e:
+                if hasattr(e, "status_code") and e.status_code == 429:
+                    print("Rate limited by ElevenLabs API in get_remaining(). Waiting 10 seconds before retry...")
+                    time.sleep(10)
+                else:
+                    raise
 
     def check_remaining_by_text(self, text):
         if len(text) > self.get_remaining():
