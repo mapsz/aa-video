@@ -107,7 +107,7 @@ class VideoManager:
 
         best_height = False
         for format in formats:
-            if "height" in format and format["video_ext"] == "mp4":
+            if "height" in format and format.get("video_ext") in ["mp4", "webm", "mkv"]:
                 if (best_height == False): best_height = format["height"]
                 if (format["height"] == 1080):
                     best_height = format["height"]
@@ -117,17 +117,26 @@ class VideoManager:
 
         best_video = False
         for format in formats:
-            if "height" in format and format["video_ext"] == "mp4":
+            if "height" in format and format.get("video_ext") in ["mp4", "webm", "mkv"]:
                 if (best_video == False): best_video = format
-                if (format["height"] == best_height and format["vbr"] > best_video["vbr"]):
+                if (format["height"] == best_height and
+                    format.get("vbr") is not None and
+                    best_video.get("vbr") is not None and
+                    format["vbr"] > best_video["vbr"]):
                     best_video = format
 
         best_audio = False
         for format in formats:
-            if not "height" in format and format["audio_ext"] == "mp4":
+            if "height" not in format and format.get("audio_ext") in ["m4a", "mp3", "webm", "opus"]:
                 if (best_audio == False): best_audio = format
-                if (best_audio["quality"] > best_audio["quality"]):
+                if (format.get("quality") is not None and
+                    best_audio.get("quality") is not None and
+                    format["quality"] > best_audio["quality"]):
                     best_audio = format
+
+        # Validate that both video and audio formats were found
+        if best_video == False or best_audio == False:
+            return None
 
         yield {
             'format_id': f'{best_video["format_id"]}+{best_audio["format_id"]}',
@@ -141,12 +150,14 @@ class VideoManager:
         filepath = f"storage/video/source/{Video.SOURCE_YOUTUBE}/{filename}.mp4"
         make_dir(filepath)
         ydl_opts = {
-            'format': VideoManager.yt_dlp_select_format,
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best',
+            'format_sort': ['res:1080', 'vbr', 'abr'],
             'outtmpl': filepath,
             'postprocessors': [
                 {'key': 'FFmpegMetadata'}
             ],
             'prefer_ffmpeg': True,
+            'merge_output_format': 'mp4',
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

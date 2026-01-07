@@ -1,26 +1,18 @@
 from annotated_types import T
-from config import DatabaseUri
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from modules.models._base import Base
 from modules.models import Thread
 from modules.models import Comment
 from modules.models import Video
 from modules import Reddit
 from datetime import datetime
-import textwrap, copy
+import copy
 import os
 import time
-from PIL import ImageFont, ImageDraw, Image
 from modules import ComicBubble
-from modules import get_session, make_dir
-from modules import Elevenlabs
+from modules import get_session
 from modules import TextToSpeech, VideoManager, ThreadManager
-from pydub import AudioSegment
-from pydub.utils import which
-from modules import make_dir
-from moviepy.config import change_settings
 from mutagen.mp3 import MP3
+
+from modules.utils.helpers import dd
 
 
 def test_current_comments_symbols_per_sec(session):
@@ -122,6 +114,8 @@ while 1:
                 VideoManager.split_video(video, duration)
 
         VideoManager.files_to_db(session)
+
+    dd(11)
 
     # Update Threads
     if 1:
