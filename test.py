@@ -7,7 +7,7 @@ from datetime import datetime
 import copy
 import os
 import time
-from modules import ComicBubble
+from modules import WhiteSquare
 from modules import get_session
 from modules import TextToSpeech, VideoManager, ThreadManager
 from mutagen.mp3 import MP3
@@ -227,7 +227,7 @@ while 1:
     # Make Images
     if 1:
         for duration, thread in durationThreads.items():
-            comic_bubble = ComicBubble()
+            comic_bubble = WhiteSquare()
             comic_bubble.thread_to_images(thread)
 
     #
