@@ -163,26 +163,26 @@ class VideoManager:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download(url)
 
-    def split_video(videoModule, duration):
+    def split_video(videoModel, duration):
         chunk_length = duration
-        with VideoFileClip(videoModule.filepath) as video:
+        with VideoFileClip(videoModel.filepath) as video:
             video_duration = video.duration
 
         start_time = 0
         chunk_number = 1
-        video_filename = os.path.splitext(os.path.basename(videoModule.filepath))[0]
+        video_filename = os.path.splitext(os.path.basename(videoModel.filepath))[0]
         while start_time < video_duration:
             end_time = start_time + chunk_length
             if (end_time > video_duration):
                 return
             output_filepath = f"storage/video/{Video.TYPE_SOURCE_SPLITED}/{Video.SOURCE_YOUTUBE}/{duration}/{video_filename}__part_{chunk_number}__.mp4"
             make_dir(output_filepath)
-            ffmpeg_extract_subclip(videoModule.filepath, start_time, end_time, output_filepath)
+            ffmpeg_extract_subclip(videoModel.filepath, start_time, end_time, output_filepath)
             start_time += chunk_length
             chunk_number += 1
 
-    def to_vertical(videoModule):
-        with VideoFileClip(videoModule.filepath) as video:
+    def to_vertical(videoModel):
+        with VideoFileClip(videoModel.filepath) as video:
             width, height = video.size
 
             new_width = int(height * 9 / 16)
@@ -193,7 +193,7 @@ class VideoManager:
                 x2=(width + new_width) // 2
             )
 
-            video_filename = os.path.splitext(os.path.basename(videoModule.filepath))[0]
+            video_filename = os.path.splitext(os.path.basename(videoModel.filepath))[0]
 
             filepath = f"storage/video/{Video.TYPE_SOURCE_VERTICAL}/{Video.SOURCE_YOUTUBE}/{video_filename}.mp4"
             make_dir(filepath)
